@@ -1,10 +1,19 @@
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:ui' as ui;
+import 'dart:typed_data';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sphere_vendor/model/location_model.dart';
+import 'package:sphere_vendor/screens/custom_widget/myWidgets.dart';
 import '../model/user_login_model.dart';
 import '../screens/custom_widget/custom_dialog.dart';
 import '../screens/custom_widget/custom_proggress_dialog.dart';
@@ -16,19 +25,21 @@ import '../web_services/user_service.dart';
 
 class VendorProfileScreenController extends GetxController{
   GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-  TextEditingController fNameTEController=TextEditingController();
-  TextEditingController lNameTEController=TextEditingController();
+  Rx<TextEditingController> fNameTEController=TextEditingController().obs;
+  Rx<TextEditingController> lNameTEController=TextEditingController().obs;
   Rx<TextEditingController> emailTEController=TextEditingController().obs;
-  TextEditingController phNoTEController=TextEditingController();
+  Rx<TextEditingController> phNoTEController=TextEditingController().obs;
   Rx<TextEditingController> businessNameTEController=TextEditingController().obs;
-  TextEditingController descriptionTEController=TextEditingController();
-  TextEditingController businessAddTEController=TextEditingController();
+  Rx<TextEditingController> descriptionTEController=TextEditingController().obs;
+  Rx<TextEditingController> businessAddTEController=TextEditingController().obs;
+
+  Position? latLng;
 
   RxList<String> linkList = <String>[].obs;
 
   FocusNode fNameFocusNode = FocusNode(),
       lNameFocusNode = FocusNode(),phoneFocusNode=FocusNode(),descFocusNode=FocusNode(),businessNameFocusNode=FocusNode();
-
+   Uint8List markerIcon=Uint8List(100);
   UserLoginModel userLoginModel=UserLoginModel.empty();
   Rx<File> photoImage=File('').obs;
   Rx<File> coverPhotoImage=File('').obs;
@@ -46,6 +57,67 @@ class VendorProfileScreenController extends GetxController{
 
   UserSession userSession = UserSession();
 
+ CameraPosition kGooglePlex = const CameraPosition(
+    target: LatLng(37.42796133580664, -122.085749655962),
+    zoom: 14.4746,
+  );
+
+ Completer<GoogleMapController> gController = Completer<GoogleMapController>();
+
+ Uint8List? markerImage;
+
+ List<Marker> markers=[];
+ List<Marker> listOfMarkers=[
+ ];
+
+  RxString address = ''.obs;
+
+ 
+
+ Future<void> getByteFromAsset(String path, int width) async{
+   print('-------------------$path');
+   ByteData byteData=await rootBundle.load(path);
+   ui.Codec codec=await ui.instantiateImageCodec(byteData.buffer.asUint8List(),targetHeight: width);
+   ui.FrameInfo fi=await codec.getNextFrame();
+   markerIcon= (await fi.image.toByteData(format:ui.ImageByteFormat.png))!.buffer.asUint8List();
+   print('-----------::: ${markerIcon}');
+ }
+
+ Future<void> getCurrentPosition() async{
+   bool serviceEnabled;
+   LocationPermission permission;
+   serviceEnabled = await Geolocator.isLocationServiceEnabled();
+   if (!serviceEnabled) {
+     return Future.error('Location services are disabled.');
+   }
+
+   permission = await Geolocator.checkPermission();
+   if (permission == LocationPermission.denied) {
+     permission = await Geolocator.requestPermission();
+     if (permission == LocationPermission.denied) {
+       CustomDialogs().showMessageDialog(title: 'Alert',
+           description:'Location permissions are denied',
+           type: DialogType.ERROR);
+     }
+   }
+   if (permission == LocationPermission.deniedForever) {
+     CustomDialogs().showMessageDialog(title: 'Alert',
+         description:'Location permissions are permanently denied, we cannot request permissions.',
+         type: DialogType.ERROR);
+   }
+   latLng=await Geolocator.getCurrentPosition();
+   getAddressFromLatLong(latLng!);
+   print('----------------------->>${latLng!.latitude.toString()}');
+ }
+
+  Future<void> getAddressFromLatLong(Position position)async {
+    List<Placemark> placeMarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+    print(placeMarks);
+    Placemark place = placeMarks[0];
+    address.value= '${place.locality}';
+    print('===========================>> $address');
+
+  }
 
 
   Future<bool> onBackPressed() async {
@@ -61,16 +133,57 @@ class VendorProfileScreenController extends GetxController{
   }
 
   Rx<UserLoginModel> userLoginModelFromSession=UserLoginModel.empty().obs;
+
+  BitmapDescriptor? customIcon;
+
+// make sure to initialize before map loading
+
   @override
   void onInit() {
     getUserFromSession();
+    getByteFromAsset(Img.get('location_icon.png'), 100);
     super.onInit();
+  }
+
+  customMarker(){
+    BitmapDescriptor.fromAssetImage(const ImageConfiguration(size: Size(12, 12)),
+        Img.get('location_png.icon'))
+        .then((d) {
+      customIcon = d;
+    });
+  }
+  
+  Future<void> loadData() async{
+    listOfMarkers=[
+      Marker(
+      icon:BitmapDescriptor.fromBytes((markerIcon)),
+        markerId: const MarkerId('1'),
+        position: LatLng(latLng!.latitude, latLng!.longitude),
+        infoWindow: const InfoWindow(title: 'Current Location')
+    )];
   }
 
   Future<void> getUserFromSession() async{
     userLoginModelFromSession.value=await userSession.getUserLoginModel();
+    log('===========================> : ${userLoginModelFromSession.value.userDetailModel.locationModelList.toString()}');
     emailTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.uAccEmail);
     businessNameTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.businessName);
+    if(userLoginModelFromSession.value.userDetailModel.firstName!=''){
+      fNameTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.firstName);
+    }  if(userLoginModelFromSession.value.userDetailModel.lastName!=''){
+      lNameTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.lastName);
+    }  if(userLoginModelFromSession.value.userDetailModel.phone!=''){
+      phNoTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.phone);
+    }if(userLoginModelFromSession.value.userDetailModel.description!=''){
+      descriptionTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.description);
+    }
+    for(int i=0;i<userLoginModelFromSession.value.userDetailModel.locationModelList.length;i++){
+      if(userLoginModelFromSession.value.userDetailModel.locationModelList[i].address!=''
+      && userLoginModelFromSession.value.userDetailModel.locationModelList[i].isDefault==1
+      ){
+        businessAddTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.locationModelList[i].address);
+      }
+    }
   }
 
   void removeFocus(){
@@ -88,6 +201,7 @@ class VendorProfileScreenController extends GetxController{
       businessNameFocusNode.unfocus();
     }
   }
+
 Future<void> onUploadImage() async{
   try{
     bool hasCameraPermission=await PermissionsHandler().requestPermission(permission: Permission.camera,
@@ -224,11 +338,11 @@ Future<void> onUploadImage() async{
 
   bool fNameValidation(String value) {
     if (value.trim() == "") {
-      if(fNameTEController.text.isEmpty){
+      if(fNameTEController.value.text.isEmpty){
         fNameErrorMsg.value = "First Name is required!";
         fNameErrorVisible.value = true;
       }
-    } else if (fNameTEController.text.length<=3) {
+    } else if (fNameTEController.value.text.length<=3) {
       fNameErrorVisible.value = true;
       fNameErrorMsg.value = "First name should be greater then 3";
     } else {
@@ -240,11 +354,11 @@ Future<void> onUploadImage() async{
 
   bool lNameValidation(String value) {
     if (value.trim() == "") {
-      if(lNameTEController.text.isEmpty){
+      if(lNameTEController.value.text.isEmpty){
         lNameErrorMsg.value = "Last Name is required!";
         lNameErrorVisible.value = true;
       }
-    } else if (lNameTEController.text.length<=3) {
+    } else if (lNameTEController.value.text.length<=3) {
       lNameErrorVisible.value = true;
       lNameErrorMsg.value = "Last name should be greater then 3";
     } else {
@@ -256,11 +370,11 @@ Future<void> onUploadImage() async{
 
   bool phoneValidation(String value) {
     if (value.trim() == "") {
-      if(phNoTEController.text.isEmpty){
+      if(phNoTEController.value.text.isEmpty){
         phoneErrorMsg.value = "Phone number is required!";
         phoneErrorVisible.value = true;
       }
-    } else if (phNoTEController.text.length<11 || phNoTEController.text.length>11) {
+    } else if (phNoTEController.value.text.length<11 || phNoTEController.value.text.length>11) {
       phoneErrorVisible.value = true;
       phoneErrorMsg.value = "Invalid Phone Number";
     } else {
@@ -272,7 +386,7 @@ Future<void> onUploadImage() async{
 
   bool descriptionValidation(String value) {
     if (value.trim() == "") {
-      if(descriptionTEController.text.isEmpty){
+      if(descriptionTEController.value.text.isEmpty){
         descriptionErrorMsg.value = "Description is required!";
         descriptionErrorVisible.value = true;
       }
@@ -288,17 +402,17 @@ Future<void> onUploadImage() async{
     removeFocus();
     bool isAllDataValid = false;
   //  isAllDataValid =  !businessValidation(businessNameTEController.text);
-    isAllDataValid = !fNameValidation(fNameTEController.text);
-    isAllDataValid = !lNameValidation(lNameTEController.text) && isAllDataValid;
-    isAllDataValid = !phoneValidation(phNoTEController.text) && isAllDataValid;
-    isAllDataValid = !descriptionValidation(descriptionTEController.text) && isAllDataValid;
+    isAllDataValid = !fNameValidation(fNameTEController.value.text);
+    isAllDataValid = !lNameValidation(lNameTEController.value.text) && isAllDataValid;
+    isAllDataValid = !phoneValidation(phNoTEController.value.text) && isAllDataValid;
+    isAllDataValid = !descriptionValidation(descriptionTEController.value.text) && isAllDataValid;
     if(isAllDataValid){
       userLoginModel.userDetailModel.profileImage=photoImage.value.path.split('/').reversed.first;
       userLoginModel.userDetailModel.coverImage=coverPhotoImage.value.path.split('/').reversed.first;
-      userLoginModel.userDetailModel.firstName=fNameTEController.text;
-      userLoginModel.userDetailModel.lastName=lNameTEController.text;
-      userLoginModel.userDetailModel.phone=phNoTEController.text;
-      userLoginModel.userDetailModel.description=descriptionTEController.text;
+      userLoginModel.userDetailModel.firstName=fNameTEController.value.text;
+      userLoginModel.userDetailModel.lastName=lNameTEController.value.text;
+      userLoginModel.userDetailModel.phone=phNoTEController.value.text;
+      userLoginModel.userDetailModel.description=descriptionTEController.value.text;
       ProgressDialog pd = ProgressDialog();
       pd.showDialog();
       if(await CommonCode().checkInternetAccess()) {
@@ -326,11 +440,39 @@ Future<void> onUploadImage() async{
     }
   }
 
+  Future<void> onLocationUpdate() async{
+    if(businessAddTEController.value.text!=''){
+      LocationModel locationModel=LocationModel(address: businessAddTEController.value.text, latitude: latLng!.latitude.toString(), longitude: latLng!.longitude.toString());
+      ProgressDialog pd = ProgressDialog();
+      pd.showDialog();
+      if(await CommonCode().checkInternetAccess()) {
+        String response=await UserService().updateLocation(locationModel: locationModel);
+        if (response=='Location Updated successfully') {
+          pd.dismissDialog();
+        } else {
+          pd.dismissDialog();
+          CustomDialogs().showMessageDialog(title: "Alert",
+              description: response,
+              type: DialogType.ERROR);
+        }
+      } else{
+        pd.dismissDialog();
+        CustomDialogs().showMessageDialog(title: 'Alert',
+            description: kInternetMsg,
+            type: DialogType.ERROR);
+      }
+
+    }
+
+    }
+
+
   @override
   void dispose() {
-    fNameTEController.dispose();
-    lNameTEController.dispose();
-    phNoTEController.dispose();
+    fNameTEController.value.dispose();
+    lNameTEController.value.dispose();
+    phNoTEController.value.dispose();
+    descriptionTEController.value.dispose();
     emailTEController.value.dispose();
     super.dispose();
   }

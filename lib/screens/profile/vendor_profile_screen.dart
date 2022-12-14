@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sphere_vendor/utils/app_constants.dart';
 import '../../controller/vendor_profile_screen_controller.dart';
 import '../../utils/app_colors.dart';
@@ -120,9 +123,10 @@ Widget _getBody(BuildContext context){
                       ),
                     ),
                   ),*/
-                  formWidget(
-                      onChanged: controller.fNameValidation,
-                      title: 'First Name*',hint: 'Name',textEditingController: controller.fNameTEController),
+                  Obx(()=>formWidget(
+                        onChanged: controller.fNameValidation,
+                        title: 'First Name*',hint: 'Name',textEditingController: controller.fNameTEController.value),
+                  ),
                   Obx(
                         ()=> Visibility(
                       visible: controller.fNameErrorVisible.value,
@@ -132,9 +136,10 @@ Widget _getBody(BuildContext context){
                       ),
                     ),
                   ),
-                  formWidget(
-                      onChanged: controller.lNameValidation,
-                      title: 'Last Name*',hint: 'Last Name',textEditingController: controller.lNameTEController),
+                  Obx(()=>formWidget(
+                        onChanged: controller.lNameValidation,
+                        title: 'Last Name*',hint: 'Last Name',textEditingController: controller.lNameTEController.value),
+                  ),
                   Obx(
                         ()=> Visibility(
                       visible: controller.lNameErrorVisible.value,
@@ -145,10 +150,11 @@ Widget _getBody(BuildContext context){
                     ),
                   ),
                   Obx(()=> formWidget(readOnly:true,title: 'Email*',hint: controller.userLoginModelFromSession.value.userDetailModel.uAccEmail,textEditingController: controller.emailTEController.value)),
-                  formWidget(
-                      onChanged: controller.phoneValidation,
-                      keyBoardInput: TextInputType.phone,
-                      title: 'Phone Number*',hint: 'Phone Number',textEditingController: controller.phNoTEController),
+                  Obx(()=> formWidget(
+                        onChanged: controller.phoneValidation,
+                        keyBoardInput: TextInputType.phone,
+                        title: 'Phone Number*',hint: 'Phone Number',textEditingController: controller.phNoTEController.value),
+                  ),
                   Obx(
                         ()=> Visibility(
                       visible: controller.phoneErrorVisible.value,
@@ -159,12 +165,15 @@ Widget _getBody(BuildContext context){
                     ),
                   ),
                   GestureDetector(
-                      onTap: (){
+                      onTap: () async{
+                        await controller.getCurrentPosition();
+                        controller.loadData();
+                        controller.markers.addAll(controller.listOfMarkers);
                         showBottomSheet(context);
                       },
 
-                      child: formWidget(title: 'Business Address*',hint: 'Luxury Chair',textEditingController: controller.businessAddTEController)),
-                  descriptionContainer(title: 'Description*',hint: 'Write about you',textEditingController: controller.descriptionTEController,onChanged: controller.descriptionValidation),
+                      child: Obx(()=>formWidget(title: 'Business Address*',hint: 'address',textEditingController: controller.businessAddTEController.value))),
+                  Obx(()=> descriptionContainer(title: 'Description*',hint: 'Write about you',textEditingController: controller.descriptionTEController.value,onChanged: controller.descriptionValidation)),
                   Obx(
                         ()=> Visibility(
                       visible: controller.descriptionErrorVisible.value,
@@ -315,29 +324,37 @@ Widget formWidget(
                   children: [
                     Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
-                        child: Stack(
-                          children: [
-                            Container(
-                              height: 250,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  image: const DecorationImage(image: AssetImage('assets/images/map.png'),fit: BoxFit.cover)
-                              ),
+                        child: Container(
+                          height: 250,
+                          child: GoogleMap(
+                            onMapCreated: (GoogleMapController googleMapController){
+                              if(controller.gController.isCompleted){}else {
+                              controller.gController
+                                  .complete(googleMapController);
+                            }
+                          },
+                              mapType: MapType.normal,
+                              markers: Set<Marker>.of(controller.markers),
+                            initialCameraPosition: CameraPosition(
+                              target: LatLng(controller.latLng!.latitude, controller.latLng!.longitude),
+                              zoom: 14.4746,
+                            )
+                          ),
 
-                              /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/),
-                            Positioned(
-                                top: 20,
-                                right: 10,
-                                left: 10,
-                                child: Icon(Icons.location_on,size: 60,color: AppColors.darkPink,)),
-                          ],)
+                          /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/)
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       child: Row(
                         children: [
-                          Expanded(child: primaryButton(buttonText: 'Cancel',color: AppColors.primary,textColor: AppColors.white,height: 40,fontSize: 18)),
-                          Expanded(child: primaryButton(buttonText: 'Done',color: AppColors.darkPink,textColor: AppColors.white,height: 40,fontSize: 18)),
+                          Expanded(child: primaryButton(buttonText: 'Cancel',color: AppColors.primary,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
+                            Get.back();
+                          })),
+                          Expanded(child: primaryButton(buttonText: 'Done',color: AppColors.darkPink,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
+                           Get.back();
+                            controller.businessAddTEController.value.text=controller.address.value;
+                            controller.onLocationUpdate();
+                          })),
                         ],
                       ),
                     ),

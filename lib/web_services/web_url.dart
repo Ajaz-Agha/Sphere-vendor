@@ -15,3 +15,4 @@ const String kGetPromoURL = "${_kBaseURL}getPromos";
 const String kChangePromoStatusURL = "${_kBaseURL}changePromoStatus";
 const String kLogOutURL = "${_kBaseURL}logout";
 const String kChangePasswordURL = "${_kBaseURL}changePassword";
+const String kUpdateLocationURL = "${_kBaseURL}updateLocation";

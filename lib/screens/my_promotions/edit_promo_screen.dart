@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sphere_vendor/model/category_model.dart';
 import 'package:sphere_vendor/model/link_model.dart';
 import 'package:sphere_vendor/screens/custom_widget/custom_navigation_drawer.dart';
@@ -56,7 +57,7 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 20,),
-                  Container(
+                  SizedBox(
                     height: 170,
                     width: Get.width,
                     child: GestureDetector(
@@ -97,7 +98,7 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Obx(()=> Container(
+                  Obx(()=> SizedBox(
                       height: 70,
                       child:  controller.listOfImages.isNotEmpty?Obx(
                             ()=> ListView.builder(
@@ -234,7 +235,10 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                         ),
                       ),
                       GestureDetector(
-                          onTap: (){
+                          onTap: () async{
+                            await controller.getCurrentPosition();
+                            controller.loadData();
+                            controller.markers.addAll(controller.listOfMarkers);
                             showBottomSheet(context);
                           },
                           child: formWidget(title: 'Business Address*',hint: 'Luxury Chair',textEditingController: controller.businessAddressTEController)),
@@ -426,29 +430,35 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                   children: [
                     Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
-                        child: Stack(
-                          children: [
-                            Container(
-                              height: 250,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  image: const DecorationImage(image: AssetImage('assets/images/map.png'),fit: BoxFit.cover)
-                              ),
+                        child: SizedBox(
+                          height: 250,
+                          child: GoogleMap(
+                              onMapCreated: (GoogleMapController googleMapController){
+                                if(controller.gController.isCompleted){}else {
+                                  controller.gController
+                                      .complete(googleMapController);
+                                }
+                              },
+                              mapType: MapType.normal,
+                              markers: Set<Marker>.of(controller.markers),
+                              initialCameraPosition: CameraPosition(
+                                target: LatLng(controller.latLng!.latitude, controller.latLng!.longitude),
+                                zoom: 14.4746,
+                              )
+                          ),
 
-                              /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/),
-                            Positioned(
-                                top: 20,
-                                right: 10,
-                                left: 10,
-                                child: Icon(Icons.location_on,size: 60,color: AppColors.darkPink,)),
-                          ],)
+                          /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/)
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       child: Row(
                         children: [
-                          Expanded(child: primaryButton(buttonText: 'Cancel',color: AppColors.primary,textColor: AppColors.white,height: 40,fontSize: 18)),
+                          Expanded(child: primaryButton(buttonText: 'Cancel',color: AppColors.primary,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
+                            Get.back();
+                          })),
                           Expanded(child: primaryButton(buttonText: 'Done',color: AppColors.darkPink,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
+                            Get.back();
+                            controller.onLocationUpdate();
                           })),
                         ],
                       ),

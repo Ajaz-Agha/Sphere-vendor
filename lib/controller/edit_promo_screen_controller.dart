@@ -1,8 +1,14 @@
-import 'dart:developer';
+import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart';
+import 'dart:ui' as ui;
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -13,6 +19,7 @@ import 'package:sphere_vendor/utils/app_colors.dart';
 import 'package:sphere_vendor/web_services/promo_service.dart';
 import '../screens/custom_widget/custom_dialog.dart';
 import '../screens/custom_widget/custom_proggress_dialog.dart';
+import '../screens/custom_widget/myWidgets.dart';
 import '../utils/app_constants.dart';
 import '../utils/common_code.dart';
 import '../utils/permission_handler.dart';
@@ -34,8 +41,8 @@ class EditPromoScreenController extends GetxController{
   RxList<SocialLinkModel> listOfSocialModel=<SocialLinkModel>[].obs;
   RxString chosenValue=''.obs;
   RxList<CategoryModel> items=<CategoryModel>[].obs;
-  int latitude=7323232;
-  int longitude=213243;
+  double latitude=0.0;
+  double longitude=0.0;
 
   FocusNode productNameFocusNode = FocusNode(),
       priceFocusNode = FocusNode(),discountFocusNode=FocusNode(),descFocusNode=FocusNode(),
@@ -361,10 +368,81 @@ class EditPromoScreenController extends GetxController{
   }
 
   Rx<CategoryModel> categoryModelDropDownInitialValue =CategoryModel.empty().obs;
+
+  Completer<GoogleMapController> gController = Completer<GoogleMapController>();
+
+  Uint8List? markerImage;
+
+  List<Marker> markers=[];
+  List<Marker> listOfMarkers=[
+  ];
+
+  RxString address = ''.obs;
+  Position? latLng;
+
+  Uint8List markerIcon=Uint8List(100);
+
+
+
+  Future<void> getByteFromAsset(String path, int width) async{
+    ByteData byteData=await rootBundle.load(path);
+    ui.Codec codec=await ui.instantiateImageCodec(byteData.buffer.asUint8List(),targetHeight: width);
+    ui.FrameInfo fi=await codec.getNextFrame();
+    markerIcon= (await fi.image.toByteData(format:ui.ImageByteFormat.png))!.buffer.asUint8List();
+  }
+
+  Future<void> getCurrentPosition() async{
+    bool serviceEnabled;
+    LocationPermission permission;
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      CustomDialogs().showMessageDialog(title: 'Alert',
+          description:'Location services are disabled, Please Turn on Location',
+          type: DialogType.ERROR);
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        CustomDialogs().showMessageDialog(title: 'Alert',
+            description:'Location permissions are denied',
+            type: DialogType.ERROR);
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      CustomDialogs().showMessageDialog(title: 'Alert',
+          description:'Location permissions are permanently denied, we cannot request permissions.',
+          type: DialogType.ERROR);
+    }
+    latLng=await Geolocator.getCurrentPosition();
+    getAddressFromLatLong(latLng!);
+  }
+
+  Future<void> getAddressFromLatLong(Position position)async {
+    List<Placemark> placeMarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+    Placemark place = placeMarks[0];
+    address.value= '${place.locality}';
+
+  }
+  BitmapDescriptor? customIcon;
+  @override
+
+  Future<void> loadData() async{
+    listOfMarkers=[
+      Marker(
+          icon:BitmapDescriptor.fromBytes((markerIcon)),
+          markerId: const MarkerId('1'),
+          position: LatLng(latLng!.latitude, latLng!.longitude),
+          infoWindow: const InfoWindow(title: 'Current Location')
+      )];
+  }
+
   @override
   void onInit() {
     getPromoModel=Get.arguments;
     getCategory();
+    getByteFromAsset(Img.get('location_icon.png'), 100);
     productNameTEController=TextEditingController(text: getPromoModel.productName);
     priceTEController=TextEditingController(text: getPromoModel.price);
     discountTEController=TextEditingController(text: getPromoModel.discount);
@@ -377,8 +455,13 @@ class EditPromoScreenController extends GetxController{
     linkTEController=TextEditingController();*/
    // listOfSocialModel=<SocialLinkModel>[].obs;
     categoryModelDropDownInitialValue.value=CategoryModel(getPromoModel.categoryModel.name, getPromoModel.categoryModel.id);
-    print('=============================>>$categoryModelDropDownInitialValue');
     super.onInit();
+  }
+
+  Future<void> onLocationUpdate() async{
+    businessAddressTEController.text=address.value;
+    latitude=latLng!.latitude;
+    longitude=latLng!.longitude;
   }
 
   Future<void> getCategory() async{
@@ -470,8 +553,6 @@ class EditPromoScreenController extends GetxController{
     isAllDataValid = !discountStartDateValidation(discountStartTEController.text) && isAllDataValid;
     isAllDataValid = !discountEndDateValidation(discountEndTEController.text) && isAllDataValid;
     isAllDataValid = !descriptionValidation(descriptionTEController.text) && isAllDataValid;
-    //isAllDataValid = !additionalImagesValidation(listOfImages) && isAllDataValid;
-    //isAllDataValid = !imageValidation(photoImage.value) && isAllDataValid;
     if(isAllDataValid){
       businessAddressTEController.text='London';
       ProgressDialog pd = ProgressDialog();

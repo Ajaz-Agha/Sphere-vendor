@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:sphere_vendor/model/forgot_password_model.dart';
+import 'package:sphere_vendor/model/location_model.dart';
 import 'package:sphere_vendor/web_services/web_url.dart';
 import '../model/response_model.dart';
 import '../model/user_login_model.dart';
@@ -48,7 +49,6 @@ class UserService{
     Map<String,dynamic> requestBody = userRegisterModel.toJson();
     ResponseModel responseModel = await _httpClient.postRequest(url: kRegisterUserURL,
         requestBody: requestBody,needHeaders: false);
-    log('===========================>>${responseModel.toString()}');
     if(responseModel.statusCode == 408){
       userRegisterModel.response=kPoorInternetConnection;
       return userRegisterModel;
@@ -171,6 +171,25 @@ class UserService{
       return responseModel.statusDescription;
     }
 
+  }
+
+  Future<String> updateLocation({required LocationModel locationModel})async{
+    Map<String,String> requestBody = {
+      'latitude': locationModel.latitude,
+      'longitude': locationModel.longitude,
+      'address': locationModel.address,
+    };
+    ResponseModel responseModel = await _httpClient.postRequest(url: kUpdateLocationURL,
+        requestBody: requestBody,needHeaders: true);
+    if((responseModel.statusCode == 400 || responseModel.statusCode == 500 )){
+      return kNetworkError;
+    }else if(responseModel.statusCode == 408){
+      return kPoorInternetConnection;
+    }else if(responseModel.statusDescription=="Location Updated successfully"  && responseModel.data != null && responseModel.data.length > 0){
+      return responseModel.statusDescription;
+
+    }
+    return responseModel.statusDescription;
   }
 
 }

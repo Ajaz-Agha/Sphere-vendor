@@ -76,8 +76,6 @@ class HTTPClient{
         request.fields['first_name'] = userLoginModel.userDetailModel.firstName;
         request.fields['last_name'] = userLoginModel.userDetailModel.lastName;
         request.fields['phone'] = userLoginModel.userDetailModel.phone;
-        //request.fields['business_name'] = userLoginModel.userDetailModel.businessName;
-       // request.fields['address'] = userLoginModel.userDetailModel.businessAddress;
         request.fields['description'] = userLoginModel.userDetailModel.description;
         if(imgPath!='') {
 

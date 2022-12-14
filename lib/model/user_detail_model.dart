@@ -1,5 +1,6 @@
 
 import 'package:get/get.dart';
+import 'package:sphere_vendor/model/location_model.dart';
 
 class UserDetailModel{
   String uAccEmail = "";
@@ -20,6 +21,8 @@ class UserDetailModel{
   String description='';
   int userId=-1;
   RxInt totalFav=0.obs;
+  List<LocationModel> locationModelList=[];
+  LocationModel locationModel =LocationModel.empty();
   UserDetailModel.empty();
 
   UserDetailModel.fromJSON(Map<String, dynamic> json){
@@ -35,9 +38,13 @@ class UserDetailModel{
     latitude= json['latitude'] ?? "";
     longitude= json['longitude'] ?? "";
     role=json["role"]??"";
+    description=json["description"]??"";
     createdAt=json["created_at"]??"";
     businessName=json["business_name"]??'';
     totalFav.value=json["total_favorites"]??0;
+    for(var x in json["locations"]??[]) {
+      locationModelList.add(LocationModel.fromJson(x));
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -58,6 +65,8 @@ class UserDetailModel{
       "description": description,
       "business_name":businessName,
       "address":businessAddress,
+      "locations":locationModelList
+
     };
   }
   Map<String, dynamic> toJsonForUpdate() {
@@ -74,6 +83,6 @@ class UserDetailModel{
 
   @override
   String toString() {
-    return 'UserDetailModel{uAccEmail: $uAccEmail, requestErrorMessage: $requestErrorMessage, firstName: $firstName, lastName: $lastName, profileImage: $profileImage, profileImageUrl: $profileImageUrl, coverImageUrl: $coverImageUrl, coverImage: $coverImage, phone: $phone, longitude: $longitude, latitude: $latitude, role: $role, createdAt: $createdAt, businessName: $businessName, businessAddress: $businessAddress, description: $description, userId: $userId, totalFav: $totalFav}';
+    return 'UserDetailModel{uAccEmail: $uAccEmail, requestErrorMessage: $requestErrorMessage, firstName: $firstName, lastName: $lastName, profileImage: $profileImage, profileImageUrl: $profileImageUrl, coverImageUrl: $coverImageUrl, coverImage: $coverImage, phone: $phone, longitude: $longitude, latitude: $latitude, role: $role, createdAt: $createdAt, businessName: $businessName, businessAddress: $businessAddress, description: $description, userId: $userId, totalFav: $totalFav, locationModelList: $locationModelList}';
   }
 }

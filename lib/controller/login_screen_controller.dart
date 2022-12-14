@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -107,6 +109,7 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
         UserLoginModel userLoginModel = await UserService().loginUser(
             password: passwordTEController.text,
             email: emailTEController.text);
+        log('=======================>>>${userLoginModel.userDetailModel.locationModelList}');
         if (userLoginModel.token.isNotEmpty && userLoginModel.userDetailModel.role=='vendor') {
           userSession.createSession(userLoginModel: userLoginModel);
           pd.dismissDialog();

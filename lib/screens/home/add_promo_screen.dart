@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sphere_vendor/controller/add_promo_screen_controller.dart';
 import 'package:sphere_vendor/model/category_model.dart';
 import 'package:sphere_vendor/screens/custom_widget/custom_navigation_drawer.dart';
@@ -243,10 +244,20 @@ Widget _getBody(BuildContext context){
                     ),
                   ),
                   GestureDetector(
-                      onTap: (){
+                      onTap: () async{
+                        await controller.getCurrentPosition();
+                        controller.loadData();
+                        controller.markers.addAll(controller.listOfMarkers);
                         showBottomSheet(context);
                       },
-                      child: formWidget(title: 'Business Address*',hint: 'Luxury Chair',textEditingController: controller.businessAddressTEController)),
+                      child: Obx(()=>formWidget(title: 'Business Address*',hint: 'Luxury Chair',textEditingController: controller.businessAddressTEController.value,onChanged: controller.businessAddValidation))),
+                  Obx(
+                        ()=> Visibility(
+                      visible: controller.businessAddressErrorVisible.value,
+                      child: Text(controller.businessAddressErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                    ),
+                  ),
+                  SizedBox(height: 10,),
                   titleWidget(title: '+ Add Social Links*'),
                   addLinkWidget(),
                   Obx(
@@ -304,6 +315,7 @@ Widget optionStatus(Color color, String title){
       {required String title,
         required String hint,
         dynamic onChanged,
+        dynamic readonly,
         TextInputType? keyBoardInput,
         required TextEditingController textEditingController}){
     return Padding(
@@ -454,29 +466,35 @@ Widget optionStatus(Color color, String title){
                   children: [
                     Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
-                        child: Stack(
-                          children: [
-                            Container(
-                              height: 250,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  image: const DecorationImage(image: AssetImage('assets/images/map.png'),fit: BoxFit.cover)
-                              ),
+                        child: Container(
+                          height: 250,
+                          child:  GoogleMap(
+                              onMapCreated: (GoogleMapController googleMapController){
+                                if(controller.gController.isCompleted){}else {
+                                  controller.gController
+                                      .complete(googleMapController);
+                                }
+                              },
+                              mapType: MapType.normal,
+                              markers: Set<Marker>.of(controller.markers),
+                              initialCameraPosition: CameraPosition(
+                                target: LatLng(controller.latLng!.latitude, controller.latLng!.longitude),
+                                zoom: 14.4746,
+                              )
+                          ),
 
-                              /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/),
-                            Positioned(
-                                top: 20,
-                                right: 10,
-                                left: 10,
-                                child: Icon(Icons.location_on,size: 60,color: AppColors.darkPink,)),
-                          ],)
+                          /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/)
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       child: Row(
                         children: [
-                          Expanded(child: primaryButton(buttonText: 'Cancel',color: AppColors.primary,textColor: AppColors.white,height: 40,fontSize: 18)),
+                          Expanded(child: primaryButton(buttonText: 'Cancel',color: AppColors.primary,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
+                            Get.back();
+                          })),
                           Expanded(child: primaryButton(buttonText: 'Done',color: AppColors.darkPink,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
+                            Get.back();
+                            controller.onLocationUpdate();
                           })),
                         ],
                       ),
