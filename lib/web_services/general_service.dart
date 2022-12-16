@@ -1,4 +1,5 @@
 import 'package:sphere_vendor/model/category_model.dart';
+import 'package:sphere_vendor/model/notification_model.dart';
 import 'package:sphere_vendor/web_services/web_url.dart';
 import '../model/response_model.dart';
 import 'http_client.dart';
@@ -30,6 +31,24 @@ class GeneralService{
       return responseModel.statusDescription;
     }
     return category;
+  }
+
+  Future<dynamic> getNotification()async{
+    List<NotificationModel> notifications = <NotificationModel>[];
+    ResponseModel responseModel = await _httpClient.getRequest(
+        url: kGetNotificationsURL);
+    if (responseModel.statusDescription.isNotEmpty &&
+        responseModel.statusDescription == "Notifications found" &&
+        responseModel.data != null
+        && responseModel.data.length > 0) {
+      List notificationList = responseModel.data['data'];
+      for (int i = 0; i < notificationList.length; i++) {
+        notifications.add(NotificationModel.fromJson(notificationList[i],responseModel.statusDescription));
+      }
+    }else{
+      return responseModel.statusDescription;
+    }
+    return notifications;
   }
 
 

@@ -125,8 +125,11 @@ class LoginScreen extends GetView<LoginScreenController>{
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                socialMediaIconWidget(image: "facebook_icon.png",onPressed: (){}),
-                socialMediaIconWidget(image: "google_icon.png",onPressed: (){}),
+                socialMediaIconWidget(image: "facebook_icon.png",onPressed: (){
+                }),
+                socialMediaIconWidget(image: "google_icon.png",onPressed: (){
+                  controller.onGoogleSignIn();
+                }),
                 socialMediaIconWidget(image: "apple_icon.png",onPressed: (){}),
               ],
             ),

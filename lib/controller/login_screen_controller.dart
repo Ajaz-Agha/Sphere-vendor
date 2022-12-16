@@ -1,8 +1,10 @@
 import 'dart:developer';
 
 import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../model/user_login_model.dart';
 import '../screens/custom_widget/custom_dialog.dart';
 import '../screens/custom_widget/custom_proggress_dialog.dart';
@@ -28,13 +30,22 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
       passwordFocusNode = FocusNode();
 
   UserSession userSession = UserSession();
+
+  RxString deviceTokenToSendPushNotification=''.obs;
   @override
   void onInit() {
     tabController=TabController(length: 2, vsync: this)..addListener(() {
       selectedIndex.value=tabController.index;
 
     });
+    getDeviceTokenToSendNotification();
     super.onInit();
+  }
+
+  Future<void> getDeviceTokenToSendNotification() async {
+    final FirebaseMessaging fcm = FirebaseMessaging.instance;
+    final token = await fcm.getToken();
+    deviceTokenToSendPushNotification.value = token.toString();
   }
 
   bool emailValidation(String value) {
@@ -108,8 +119,9 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
       if(await CommonCode().checkInternetAccess()) {
         UserLoginModel userLoginModel = await UserService().loginUser(
             password: passwordTEController.text,
-            email: emailTEController.text);
-        log('=======================>>>${userLoginModel.userDetailModel.locationModelList}');
+            email: emailTEController.text,
+        deviceToken: deviceTokenToSendPushNotification.value
+        );
         if (userLoginModel.token.isNotEmpty && userLoginModel.userDetailModel.role=='vendor') {
           userSession.createSession(userLoginModel: userLoginModel);
           pd.dismissDialog();
@@ -131,6 +143,14 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
             description: kInternetMsg,
             type: DialogType.ERROR);
       }
+    }
+  }
+
+  Future<void> onGoogleSignIn() async{
+    GoogleSignIn googleSignIn = GoogleSignIn();
+    try {
+      await googleSignIn.signIn();
+    } catch (error) {
     }
   }
 

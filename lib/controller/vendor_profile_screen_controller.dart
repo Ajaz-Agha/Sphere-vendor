@@ -165,7 +165,6 @@ class VendorProfileScreenController extends GetxController{
 
   Future<void> getUserFromSession() async{
     userLoginModelFromSession.value=await userSession.getUserLoginModel();
-    log('===========================> : ${userLoginModelFromSession.value.userDetailModel.locationModelList.toString()}');
     emailTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.uAccEmail);
     businessNameTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.businessName);
     if(userLoginModelFromSession.value.userDetailModel.firstName!=''){

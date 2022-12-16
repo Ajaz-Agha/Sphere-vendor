@@ -19,11 +19,12 @@ class UserService{
 
   late HTTPClient _httpClient;
 
-  Future<UserLoginModel> loginUser({required String password,String email=""})async{
+  Future<UserLoginModel> loginUser({required String password,String email="",required deviceToken})async{
     UserLoginModel userLoginModel = UserLoginModel.empty();
     Map<String,String> requestBody = {
       "email":email,
       "password":password,
+      "device_id":deviceToken
     };
     ResponseModel responseModel = await _httpClient.postRequest(url: kLoginUserURL,
         requestBody: requestBody,needHeaders: false);
