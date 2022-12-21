@@ -212,7 +212,6 @@ class VendorProfileScreenController extends GetxController{
 
   Future<void> getUserFromSession() async{
     userLoginModelFromSession.value=await userSession.getUserLoginModel();
-    print('======================>>>${userLoginModelFromSession.value.userDetailModel.locationModel.toString()}');
     emailTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.uAccEmail);
     businessNameTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.businessName);
     if(userLoginModelFromSession.value.userDetailModel.firstName!=''){
@@ -457,12 +456,28 @@ Future<void> onUploadImage() async{
     return descriptionErrorVisible.value;
   }
 
+  bool businessValidation(String value) {
+    if (value.trim() == "") {
+      businessNameErrorVisible.value = true;
+      businessNameErrorMsg.value = "Business name is required!";
+    } else if (value.trim().length < 5 ||
+        value.isEmpty) {
+      businessNameErrorVisible.value = true;
+      businessNameErrorMsg.value = "Invalid";
+    }
+    else {
+      businessNameErrorVisible.value = false;
+      businessNameErrorMsg.value = "";
+    }
+    return businessNameErrorVisible.value;
+  }
+
 
   Future<void> onUpdateButton() async{
     removeFocus();
     bool isAllDataValid = false;
-  //  isAllDataValid =  !businessValidation(businessNameTEController.text);
-    isAllDataValid = !fNameValidation(fNameTEController.value.text);
+    isAllDataValid =  !businessValidation(businessNameTEController.value.text);
+    isAllDataValid = !fNameValidation(fNameTEController.value.text)  && isAllDataValid;
     isAllDataValid = !lNameValidation(lNameTEController.value.text) && isAllDataValid;
     isAllDataValid = !phoneValidation(phNoTEController.value.text) && isAllDataValid;
     isAllDataValid = !categoryValidation(listOfSelectedIndex) && isAllDataValid;

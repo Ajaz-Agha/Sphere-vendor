@@ -69,7 +69,7 @@ class SignupScreen extends GetView<SignUpScreenController>{
                 visible: controller.emailErrorMsgVisibility.value,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 3,bottom: 10),
-                  child: Text(controller.emailTFErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                  child: Text(controller.emailTFErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                 ),
               ),
             ),
@@ -95,7 +95,7 @@ class SignupScreen extends GetView<SignUpScreenController>{
                 visible: controller.passwordErrorMsgVisibility.value,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 3,bottom: 10),
-                  child: Text(controller.passwordTFErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                  child: Text(controller.passwordTFErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                 ),
               ),
             ),
@@ -120,7 +120,7 @@ class SignupScreen extends GetView<SignUpScreenController>{
                 visible: controller.confirmPasswordErrorMsgVisibility.value,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 3,bottom: 20),
-                  child: Text(controller.confirmPasswordTFErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                  child: Text(controller.confirmPasswordTFErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                 ),
               ),
             ),

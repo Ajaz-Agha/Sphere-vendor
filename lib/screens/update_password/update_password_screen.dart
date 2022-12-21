@@ -41,21 +41,6 @@ class UpdatePasswordScreen extends GetView<UpdatePasswordScreenController>{
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 20,),
-                    customTextField(
-                          onChanged: controller.emailValidation,
-                          controller: controller.emailTEController,
-                          hintText: "Email",prefexIcon: Icon(Icons.mail_outline,size: 15,color:AppColors.lightPink,),color: AppColors.lightPink,suffixIcon: Icon(Icons.check_circle,color: AppColors.lightPink,size: 15,)
-                    ),
-                    Obx(
-                          ()=> Visibility(
-                        visible: controller.emailErrorVisible.value,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 3,bottom: 10),
-                          child: Text(controller.emailErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                     Obx(
                           ()=> customTextField(
                         onChanged: controller.oldPasswordValidation,
@@ -77,7 +62,7 @@ class UpdatePasswordScreen extends GetView<UpdatePasswordScreenController>{
                         visible: controller.oldPasswordErrorMsgVisibility.value,
                         child: Padding(
                           padding: const EdgeInsets.only(top: 3,bottom: 10),
-                          child: Text(controller.oldPasswordTFErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                          child: Text(controller.oldPasswordTFErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                         ),
                       ),
                     ),
@@ -103,7 +88,7 @@ class UpdatePasswordScreen extends GetView<UpdatePasswordScreenController>{
                         visible: controller.passwordErrorMsgVisibility.value,
                         child: Padding(
                           padding: const EdgeInsets.only(top: 3,bottom: 10),
-                          child: Text(controller.passwordTFErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                          child: Text(controller.passwordTFErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                         ),
                       ),
                     ),
@@ -128,7 +113,7 @@ class UpdatePasswordScreen extends GetView<UpdatePasswordScreenController>{
                         visible: controller.confirmPasswordErrorMsgVisibility.value,
                         child: Padding(
                           padding: const EdgeInsets.only(top: 3,bottom: 20),
-                          child: Text(controller.confirmPasswordTFErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                          child: Text(controller.confirmPasswordTFErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                         ),
                       ),
                     ),

@@ -77,7 +77,16 @@ class NotificationScreen extends GetView<NotificationScreenController>{
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(description, style: bodyMediumMedium(color: textColor,fontSize: 16)),
+                    RichText(
+                      text: TextSpan(
+                        text: name,
+                        style: headingBold(color: textColor,fontSize: 16,fontWeight: FontWeight.w600),
+                        children:  <TextSpan>[
+                          TextSpan(text: description, style: bodyMediumMedium(color: textColor,fontSize: 16)),
+
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 6,),
                     Text(time.split('T')[1].split('.')[0],style: bodyMediumMedium(color: textColor,fontSize: 12)),
               ],

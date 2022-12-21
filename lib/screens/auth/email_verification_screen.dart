@@ -99,7 +99,7 @@ class EmailVerificationScreen extends GetView<EmailVerificationScreenController>
       //runs when a code is typed in
       onCodeChanged: (String code) {
       },
-      //runs when every textfield is filled
+      //runs when every text-field is filled
       onSubmit: (String verificationCode){
         controller.otpCode.value=verificationCode;
       }, // end onSubmit

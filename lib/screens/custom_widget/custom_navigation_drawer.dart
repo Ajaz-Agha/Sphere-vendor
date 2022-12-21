@@ -51,7 +51,13 @@ class CustomNavigationDrawer extends GetView<CustomNavigationDrawerController>{
                                   ()=>
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(50.0),
-                                child: controller.userLoginModel.value.userDetailModel.profileImageUrl!=''?Image.network(controller.userLoginModel.value.userDetailModel.profileImageUrl,fit: BoxFit.cover,):imageIcon(img: 'user_image.png'),
+                                child: controller.userLoginModel.value.userDetailModel.profileImageUrl!=''?Image.network(controller.userLoginModel.value.userDetailModel.profileImageUrl,fit: BoxFit.cover,
+                                    errorBuilder: (context,x,y)=>Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 15),
+                                        color: const Color(0x30A0A0A0),
+                                        child: const Icon(Icons.error,color: Colors.red,)
+                                    )
+                                ):imageIcon(img: 'user_image.png'),
                               ),
                             ),
                           ),

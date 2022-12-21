@@ -6,6 +6,7 @@ import 'package:sphere_vendor/utils/app_constants.dart';
 import 'package:sphere_vendor/web_services/promo_service.dart';
 import '../model/category_model.dart';
 import '../model/user_login_model.dart';
+import '../utils/common_code.dart';
 import '../utils/user_session_management.dart';
 import '../web_services/general_service.dart';
 
@@ -38,16 +39,21 @@ class VendorHomeScreenController extends GetxController{
   }
 
   Future<void> getCategory() async{
-    dynamic response=await GeneralService().getCategory();
-    if(response is List<CategoryModel>){
-      items.clear();
-      categoryModelDropDownInitialValue.value = CategoryModel(response.first.name, response.first.id);
-      items.add(categoryModelDropDownInitialValue.value);
-      for(CategoryModel item in response){
-        items.add(CategoryModel(item.name,item.id));
+    if(await CommonCode().checkInternetAccess()) {
+      dynamic response=await GeneralService().getCategory();
+      if(response is List<CategoryModel>){
+        items.clear();
+        categoryModelDropDownInitialValue.value = CategoryModel(response.first.name, response.first.id);
+        items.add(categoryModelDropDownInitialValue.value);
+        for(CategoryModel item in response){
+          items.add(CategoryModel(item.name,item.id));
+        }
+        getPromo();
       }
-      getPromo();
+    }else{
+      getUserFromSession();
     }
+
   }
 
   Future<void> getPromo() async{

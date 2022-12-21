@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:get/get.dart';
@@ -37,7 +35,8 @@ Widget _getBody(BuildContext context){
                   ()=> Container(
                     height: 180,
                     decoration: BoxDecoration(
-                        image: DecorationImage(image: controller.userLoginModelFromSession.value.userDetailModel.coverImageUrl!=''?NetworkImage(controller.userLoginModelFromSession.value.userDetailModel.coverImageUrl):controller.coverPhotoImage.value.path==""?AssetImage(Img.get('empty_record.png')):FileImage(controller.coverPhotoImage.value) as ImageProvider,fit: BoxFit.cover),
+                        image: DecorationImage(image: controller.userLoginModelFromSession.value.userDetailModel.coverImageUrl!=''?NetworkImage(controller.userLoginModelFromSession.value.userDetailModel.coverImageUrl):controller.coverPhotoImage.value.path==""?AssetImage(Img.get('empty_record.png')):FileImage(controller.coverPhotoImage.value) as ImageProvider,fit: BoxFit.cover
+                        ),
                         borderRadius: const BorderRadius.only(bottomRight: Radius.circular(20),bottomLeft: Radius.circular(20))
                     ),
                     padding: const EdgeInsets.all(20),
@@ -114,17 +113,18 @@ Widget _getBody(BuildContext context){
                 children: [
                   Obx(
                   ()=> formWidget(
+                    onChanged: controller.businessValidation,
                         title: 'Business Name*',hint: controller.userLoginModelFromSession.value.userDetailModel.businessName,textEditingController: controller.businessNameTEController.value),
                   ),
-                 /* Obx(
+                  Obx(
                         ()=> Visibility(
                       visible: controller.businessNameErrorVisible.value,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 20),
-                        child: Text(controller.businessNameErrorMsg.value,textAlign:TextAlign.start,style: heading1(color: AppColors.primary,fontSize: 12),),
+                        child: Text(controller.businessNameErrorMsg.value,textAlign:TextAlign.start,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                       ),
                     ),
-                  ),*/
+                  ),
                   Obx(()=>formWidget(
                         onChanged: controller.fNameValidation,
                         title: 'First Name*',hint: 'Name',textEditingController: controller.fNameTEController.value),
@@ -134,7 +134,7 @@ Widget _getBody(BuildContext context){
                       visible: controller.fNameErrorVisible.value,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 20),
-                        child: Text(controller.fNameErrorMsg.value,textAlign:TextAlign.start,style: heading1(color: AppColors.primary,fontSize: 12),),
+                        child: Text(controller.fNameErrorMsg.value,textAlign:TextAlign.start,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                       ),
                     ),
                   ),
@@ -147,7 +147,7 @@ Widget _getBody(BuildContext context){
                       visible: controller.lNameErrorVisible.value,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 20),
-                        child: Text(controller.lNameErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                        child: Text(controller.lNameErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                       ),
                     ),
                   ),
@@ -162,7 +162,7 @@ Widget _getBody(BuildContext context){
                       visible: controller.phoneErrorVisible.value,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 20),
-                        child: Text(controller.phoneErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                        child: Text(controller.phoneErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                       ),
                     ),
                   ),
@@ -200,7 +200,7 @@ Widget _getBody(BuildContext context){
                       visible: controller.categoryErrorVisible.value,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 20),
-                        child: Text(controller.categoryErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                        child: Text(controller.categoryErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                       ),
                     ),
                   ),
@@ -210,7 +210,7 @@ Widget _getBody(BuildContext context){
                       visible: controller.descriptionErrorVisible.value,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 20),
-                        child: Text(controller.descriptionErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                        child: Text(controller.descriptionErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                       ),
                     ),
                   ),

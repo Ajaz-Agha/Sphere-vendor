@@ -79,7 +79,7 @@ class LoginScreen extends GetView<LoginScreenController>{
                 visible: controller.emailErrorVisible.value,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 3,bottom: 10),
-                  child: Text(controller.emailErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                  child: Text(controller.emailErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                 ),
               ),
             ),
@@ -105,7 +105,7 @@ class LoginScreen extends GetView<LoginScreenController>{
                 visible: controller.passwordErrorVisible.value,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 3,bottom: 10),
-                  child: Text(controller.passwordErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                  child: Text(controller.passwordErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                 ),
               ),
             ),           Padding(

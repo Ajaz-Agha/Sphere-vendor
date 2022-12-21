@@ -1,10 +1,12 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../model/user_login_model.dart';
 import '../screens/custom_widget/custom_dialog.dart';
 import '../screens/custom_widget/custom_proggress_dialog.dart';
 import '../utils/app_constants.dart';
 import '../utils/common_code.dart';
+import '../utils/user_session_management.dart';
 import '../web_services/user_service.dart';
 
 class UpdatePasswordScreenController extends GetxController{
@@ -12,12 +14,6 @@ class UpdatePasswordScreenController extends GetxController{
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
   TextEditingController oldPasswordController = TextEditingController();
-  TextEditingController emailTEController = TextEditingController();
-  RegExp emailRegex = RegExp(r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$');
-
-  RxBool emailErrorVisible = RxBool(false);
-  RxString emailErrorMsg = "".obs;
-  FocusNode emailFocusNode = FocusNode();
 
   FocusNode passwordFocusNode = FocusNode();
   FocusNode confirmPasswordFocusNode = FocusNode();
@@ -32,6 +28,11 @@ class UpdatePasswordScreenController extends GetxController{
   RxString confirmPasswordTFErrorMsg = "".obs;
   RxString oldPasswordTFErrorMsg = "".obs;
 
+  UserSession userSession = UserSession();
+  Rx<UserLoginModel> userLoginModelFromSession=UserLoginModel.empty().obs;
+  Future<void> getUserFromSession() async{
+    userLoginModelFromSession.value=await userSession.getUserLoginModel();
+  }
 
 
   Future<bool> onWillPop() {
@@ -40,9 +41,7 @@ class UpdatePasswordScreenController extends GetxController{
   }
 
   void removeAFieldsFocus() {
-    if (emailFocusNode.hasFocus) {
-      emailFocusNode.unfocus();
-    } else if (oldPasswordFocusNode.hasFocus) {
+   if (oldPasswordFocusNode.hasFocus) {
       oldPasswordFocusNode.unfocus();
     } else if (passwordFocusNode.hasFocus) {
       passwordFocusNode.unfocus();
@@ -54,25 +53,11 @@ class UpdatePasswordScreenController extends GetxController{
 
   @override
   void onInit() {
+    getUserFromSession();
     super.onInit();
   }
 
 
-  bool emailValidation(String value) {
-    if (value.trim() == "") {
-      if(emailTEController.text.isEmpty){
-        emailErrorMsg.value = "Email is required!";
-        emailErrorVisible.value = true;
-      }
-    } else if (!emailRegex.hasMatch(value)) {
-      emailErrorVisible.value = true;
-      emailErrorMsg.value = "Please Enter a valid email address";
-    } else {
-      emailErrorVisible.value = false;
-      emailErrorMsg.value = "";
-    }
-    return emailErrorVisible.value;
-  }
   bool confirmPasswordValidation(String value) {
     if (value.trim() == "") {
       confirmPasswordErrorMsgVisibility.value = true;
@@ -153,15 +138,14 @@ class UpdatePasswordScreenController extends GetxController{
   Future<void> changePasswordButtonPressed() async {
     removeAFieldsFocus();
     bool isAllDataValid = false;
-    isAllDataValid = !emailValidation(emailTEController.text);
-    isAllDataValid = !oldPasswordValidation(oldPasswordController.text) && isAllDataValid;
+    isAllDataValid = !oldPasswordValidation(oldPasswordController.text);
     isAllDataValid = !passwordValidation(passwordController.text) && isAllDataValid;
     isAllDataValid = !confirmPasswordValidation(confirmPasswordController.text) && isAllDataValid;
     if (isAllDataValid) {
       ProgressDialog pd = ProgressDialog();
       pd.showDialog();
       if(await CommonCode().checkInternetAccess()) {
-        String response=await UserService().changeOldPassword(email: emailTEController.text, password: passwordController.text, confirmPassword: confirmPasswordController.text, oldPassword: oldPasswordController.text);
+        String response=await UserService().changeOldPassword(email: userLoginModelFromSession.value.userDetailModel.uAccEmail, password: passwordController.text, confirmPassword: confirmPasswordController.text, oldPassword: oldPasswordController.text);
         if (response=='Password has been changed successfully') {
           pd.dismissDialog();
           CustomDialogs().showMessageDialog(

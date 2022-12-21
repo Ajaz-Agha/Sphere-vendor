@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:get/get.dart';
 
 import '../../controller/reset_password_screen_controller.dart';
@@ -48,14 +49,14 @@ Widget _getBody({required String heading, required String description}){
                 readOnly: controller.emailReadOnly.value,
                   onChanged: controller.emailValidation,
                   controller: controller.emailTEController,
-                  hintText: "Email",prefexIcon: Icon(Icons.mail_outline,size: 15,color:AppColors.lightPink,),color: AppColors.lightPink,suffixIcon: Icon(Icons.check_circle,color: AppColors.lightPink,size: 15,)),
+                  hintText: "Email",prefexIcon: Icon(Icons.mail_outline,size: 15,color:AppColors.lightPink,),color: AppColors.lightPink,suffixIcon: Icon(Icons.check_circle,color: controller.emailErrorVisible.value?AppColors.lightPink:AppColors.darkPink,size: 15,)),
             ),
             Obx(
                   ()=> Visibility(
                 visible: controller.emailErrorVisible.value,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 3,bottom: 10),
-                  child: Text(controller.emailErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                  child: Text(controller.emailErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                 ),
               ),
             ),
@@ -83,59 +84,21 @@ Widget _getBody({required String heading, required String description}){
 }
 
   Widget otpCodeWidget(){
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        SizedBox(
-            height: 50,
-            width: 50,
-            child: Obx(
-                  ()=>customTextField(
-                  onChanged: controller.onTextChange,
-                  keyBoardType: TextInputType.number,
-                  controller: controller.firstOtpDigit,
-                  enabled: controller.otp1.value
-              ),
-            )
-        ),
-        SizedBox(
-            height: 50,
-            width: 50,
-            child: Obx(
-                  ()=> customTextField(
-                onChanged: controller.onTextChange,
-                controller: controller.secondOtpDigit,
-                enabled: controller.otp2.value,
-                keyBoardType: TextInputType.number,
-
-              ),
-            )
-        ),
-        SizedBox(
-            height: 50,
-            width: 50,
-            child: Obx(
-                  ()=> customTextField(
-                  onChanged: controller.onTextChange,
-                  keyBoardType: TextInputType.number,
-                  controller: controller.thirdOtpDigit,
-                  enabled: controller.otp3.value
-              ),
-            )
-        ),
-        SizedBox(
-            height: 50,
-            width: 50,
-            child: Obx(
-                  ()=> customTextField(
-                  onChanged: controller.onTextChange,
-                  keyBoardType: TextInputType.number,
-                  controller: controller.fourthOtpDigit,
-                  enabled: controller.otp4.value
-              ),
-            )
-        ),
-      ],
+    return OtpTextField(
+      fieldWidth: 62,
+      numberOfFields: 4,
+      focusedBorderColor: AppColors.darkPink,
+      fillColor: AppColors.borderColor,
+      borderColor: AppColors.darkPink,
+      //set to true to show as box or false to show as dash
+      showFieldAsBox: true,
+      //runs when a code is typed in
+      onCodeChanged: (String code) {
+      },
+      //runs when every textfield is filled
+      onSubmit: (String verificationCode){
+        controller.otpCode.value=verificationCode;
+      }, // end onSubmit
     );
   }
 }

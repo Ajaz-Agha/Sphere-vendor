@@ -15,37 +15,13 @@ class ResetPasswordScreenController extends GetxController{
   RxBool emailErrorVisible = RxBool(false);
   RxString emailErrorMsg = "".obs;
   FocusNode emailFocusNode = FocusNode();
-  TextEditingController firstOtpDigit = TextEditingController();
-  TextEditingController secondOtpDigit = TextEditingController();
-  TextEditingController thirdOtpDigit = TextEditingController();
-  TextEditingController fourthOtpDigit = TextEditingController();
 
-  FocusNode firstOtpFocusNode = FocusNode();
-  FocusNode secondOtpFocusNode = FocusNode();
-  FocusNode thirdOtpFocusNode = FocusNode();
-  FocusNode fourthOtpFocusNode = FocusNode();
-
-  RxBool otp1=true.obs,otp2=true.obs,otp3=true.obs,otp4=true.obs,otpWidgetVisible=false.obs,emailReadOnly=false.obs;
+  RxBool otpWidgetVisible=false.obs,emailReadOnly=false.obs;
 
   ForgotPasswordModel fPasswordModel=ForgotPasswordModel();
 
   String email='';
-
-  bool onTextChange(String value){
-    if(firstOtpDigit.text.length==1){
-      otp1.value=false;
-    }
-    if(secondOtpDigit.text.length==1){
-      otp2.value=false;
-    }
-    if(thirdOtpDigit.text.length==1){
-      otp3.value=false;
-    }
-    if(fourthOtpDigit.text.length==1){
-      otp4.value=false;
-    }
-    return false;
-  }
+  RxString otpCode=''.obs;
 
   bool emailValidation(String value) {
     if (value.trim() == "") {
@@ -65,14 +41,6 @@ class ResetPasswordScreenController extends GetxController{
   void removeAFieldsFocus() {
     if (emailFocusNode.hasFocus) {
       emailFocusNode.unfocus();
-    } else  if (firstOtpFocusNode.hasFocus) {
-      firstOtpFocusNode.unfocus();
-    } else if (secondOtpFocusNode.hasFocus) {
-      secondOtpFocusNode.unfocus();
-    } else if (thirdOtpFocusNode.hasFocus) {
-      thirdOtpFocusNode.unfocus();
-    }else if (fourthOtpFocusNode.hasFocus) {
-      fourthOtpFocusNode.unfocus();
     }
   }
   void onResetEmailTap() async{
@@ -107,11 +75,8 @@ class ResetPasswordScreenController extends GetxController{
   }
 
   Future<void> onVerify() async{
-    String otpCode='';
-    if(firstOtpDigit.text!='' && secondOtpDigit.text!='' && thirdOtpDigit.text!='' && fourthOtpDigit.text!='') {
-      otpCode = '${firstOtpDigit.text}${secondOtpDigit.text}${thirdOtpDigit
-          .text}${fourthOtpDigit.text}';
-        if (otpCode==fPasswordModel.code.toString()) {
+    if(otpCode.value!='') {
+        if (otpCode.value==fPasswordModel.code.toString()) {
           CustomDialogs().showMessageDialog(
             title: "Success",
             description: "Verified Successfully!",
@@ -119,14 +84,6 @@ class ResetPasswordScreenController extends GetxController{
             onOkBtnPressed: () => Get.offNamed(kChangePasswordScreen, arguments: fPasswordModel.email),
           );
         } else {
-          firstOtpDigit.clear();
-          secondOtpDigit.clear();
-          thirdOtpDigit.clear();
-          fourthOtpDigit.clear();
-          otp1.value = true;
-          otp2.value = true;
-          otp3.value = true;
-          otp4.value = true;
           CustomDialogs().showMessageDialog(
               title: "Alert",
               description: 'Invalid Code!',
