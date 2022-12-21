@@ -1,14 +1,16 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:google_api_headers/google_api_headers.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_webservice/places.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -71,6 +73,7 @@ class AddPromoScreenController extends GetxController{
   RxString businessAddressErrorMsg = "".obs;
   RxList<bool> socialLinkErrorVisible = <bool>[false].obs;
   RxList<String> socialLinkErrorMsg = [""].obs;
+  RxBool isPercentage=false.obs;
 
   RxString myDate = "".obs;
 
@@ -90,10 +93,12 @@ class AddPromoScreenController extends GetxController{
   RxList<Widget> linkList = <Widget>[].obs;
 
   Completer<GoogleMapController> gController = Completer<GoogleMapController>();
-
+  GoogleMapController? googleMapController;
+  final Mode mode = Mode.overlay;
+  String kGoogleApiKey='AIzaSyD8yp_8gVLUooY70FAh8Qvdk7JYANgbOio';
   Uint8List? markerImage;
 
-  List<Marker> markers=[];
+  RxList<Marker> markers=<Marker>[].obs;
   List<Marker> listOfMarkers=[
   ];
 
@@ -101,8 +106,7 @@ class AddPromoScreenController extends GetxController{
   Position? latLng;
 
   Uint8List markerIcon=Uint8List(100);
-
-
+  RxBool isDiscount=false.obs;
 
   Future<void> getByteFromAsset(String path, int width) async{
     ByteData byteData=await rootBundle.load(path);
@@ -145,6 +149,25 @@ class AddPromoScreenController extends GetxController{
     address.value= '${place.locality}';
 
   }
+
+
+  Future<void> displayPrediction(Prediction p) async {
+    GoogleMapsPlaces places = GoogleMapsPlaces(
+        apiKey: kGoogleApiKey,
+        apiHeaders: await const GoogleApiHeaders().getHeaders()
+    );
+
+    PlacesDetailsResponse detail = await places.getDetailsByPlaceId(p.placeId!);
+    final lat = detail.result.geometry!.location.lat;
+    final lng = detail.result.geometry!.location.lng;
+    markers.clear();
+    markers.add(Marker(markerId: const MarkerId("1"),position: LatLng(lat, lng),infoWindow: InfoWindow(title: detail.result.name),icon:BitmapDescriptor.fromBytes((markerIcon)),));
+    address.value=detail.result.name;
+    latitude=lat;
+    longitude=lng;
+    googleMapController?.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lng), 14.0));
+
+  }
   BitmapDescriptor? customIcon;
   @override
 
@@ -154,9 +177,10 @@ class AddPromoScreenController extends GetxController{
           icon:BitmapDescriptor.fromBytes((markerIcon)),
           markerId: const MarkerId('1'),
           position: LatLng(latLng!.latitude, latLng!.longitude),
-          infoWindow: const InfoWindow(title: 'Current Location')
+          infoWindow: const InfoWindow(title: 'Current Location'),
       )];
   }
+
 
   Future<bool> onBackPressed() async {
     if (scaffoldKey.currentState!.isDrawerOpen) {
@@ -341,6 +365,14 @@ class AddPromoScreenController extends GetxController{
         discountErrorMsg.value = "Discount is required!";
         discountErrorVisible.value = true;
       }
+    }else if (int.parse(value)>int.parse(priceTEController.text) && !isPercentage.value) {
+        discountErrorMsg.value = "Discount should be less then original price.";
+        discountErrorVisible.value = true;
+
+    } else if (int.parse(value)>=100 && isPercentage.value) {
+      discountErrorMsg.value = "Discount should be less 100%";
+      discountErrorVisible.value = true;
+
     } else {
       discountErrorVisible.value = false;
       discountErrorMsg.value = "";
@@ -390,10 +422,13 @@ class AddPromoScreenController extends GetxController{
       if(priceTEController.text.isEmpty){
         priceErrorMsg.value = "Price is required!";
         priceErrorVisible.value = true;
+          discountTEController.clear();
+          isDiscount.value=false;
       }
     } else {
       priceErrorVisible.value = false;
       priceErrorMsg.value = "";
+      isDiscount.value=true;
     }
     return priceErrorVisible.value;
   }
@@ -529,6 +564,10 @@ class AddPromoScreenController extends GetxController{
 
         if(teController == discountStartTEController) {
           discountStartDateValidation(discountEndTEController.text);
+          if(discountStartTEController.value.text!=''){
+            DateTime endDate=DateTime(date!.year+1, date.month , date.day);
+           discountEndTEController.text= DateFormat('yyyy-MM-dd').format(endDate);
+          }
         } else if(teController == discountEndTEController){
           discountEndDateValidation(discountEndTEController.text);
         }
@@ -553,10 +592,12 @@ class AddPromoScreenController extends GetxController{
     businessAddressTEController.value.text=address.value;
     latitude=latLng!.latitude;
     longitude=latLng!.longitude;
+    getAddressFromLatLong(latLng!);
   }
 
   Future<void> onDoneButton() async{
     List<String> platform=[];
+    print('===============================>> ${ businessAddressTEController.value.text} ${latitude.toString()} $longitude');
     listOfSocialModel.clear();
     if(linkListTEController.isNotEmpty) {
       for (int i = 0; i < linkListTEController.length; i++) {
@@ -577,6 +618,7 @@ class AddPromoScreenController extends GetxController{
     }
     removeFocus();
     bool isAllDataValid = false;
+    String discount='';
     isAllDataValid =  !pNameValidation(productNameTEController.text);
     isAllDataValid = !priceValidation(priceTEController.text) && isAllDataValid;
     isAllDataValid = !discountValidation(discountTEController.text) && isAllDataValid;
@@ -588,11 +630,16 @@ class AddPromoScreenController extends GetxController{
     isAllDataValid = !additionalImagesValidation(listOfImages) && isAllDataValid;
     isAllDataValid = !imageValidation(photoImage.value) && isAllDataValid;
     if(isAllDataValid){
+      if(isPercentage.value){
+        discount=(int.parse(priceTEController.text)-(int.parse(priceTEController.text)*(int.parse(discountTEController.text)/100))).toString();
+      }else{
+        discount=(int.parse(priceTEController.text)-int.parse(discountTEController.text)).toString();
+      }
       ProgressDialog pd = ProgressDialog();
       pModel=PromoModel(
         productNameTEController.text,
         priceTEController.text,
-        discountTEController.text,
+        discount,
         discountStartTEController.text,
         discountEndTEController.text,
         descriptionTEController.text,

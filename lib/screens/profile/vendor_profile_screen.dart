@@ -1,10 +1,13 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_webservice/places.dart';
 import 'package:sphere_vendor/utils/app_constants.dart';
 import '../../controller/vendor_profile_screen_controller.dart';
+import '../../model/category_model.dart';
 import '../../utils/app_colors.dart';
 import '../custom_widget/myWidgets.dart';
 import '../custom_widget/textStyle.dart';
@@ -34,7 +37,7 @@ Widget _getBody(BuildContext context){
                   ()=> Container(
                     height: 180,
                     decoration: BoxDecoration(
-                        image: DecorationImage(image: controller.coverPhotoImage.value.path==""?AssetImage(Img.get('empty_record.png')):FileImage(controller.coverPhotoImage.value) as ImageProvider,fit: BoxFit.cover),
+                        image: DecorationImage(image: controller.userLoginModelFromSession.value.userDetailModel.coverImageUrl!=''?NetworkImage(controller.userLoginModelFromSession.value.userDetailModel.coverImageUrl):controller.coverPhotoImage.value.path==""?AssetImage(Img.get('empty_record.png')):FileImage(controller.coverPhotoImage.value) as ImageProvider,fit: BoxFit.cover),
                         borderRadius: const BorderRadius.only(bottomRight: Radius.circular(20),bottomLeft: Radius.circular(20))
                     ),
                     padding: const EdgeInsets.all(20),
@@ -85,9 +88,9 @@ Widget _getBody(BuildContext context){
                           Obx(()=>CircleAvatar(
                             maxRadius: 60,
                             backgroundColor: AppColors.emptyProfile,
-                            backgroundImage: controller.photoImage.value.path!=''?FileImage(controller.photoImage.value):null,
+                            backgroundImage: controller.userLoginModelFromSession.value.userDetailModel.profileImageUrl!=''?NetworkImage(controller.userLoginModelFromSession.value.userDetailModel.profileImageUrl):controller.photoImage.value.path!=''?FileImage(controller.photoImage.value) as ImageProvider:null,
                             child:
-                            controller.photoImage.value.path==''?
+                            controller.photoImage.value.path==''&&controller.userLoginModelFromSession.value.userDetailModel.profileImageUrl==''?
                             Center(child:Text('DP',style: heading1SemiBold(color: AppColors.lightGrey,fontSize: 50),)):null,
                           ),
                           ),
@@ -111,7 +114,6 @@ Widget _getBody(BuildContext context){
                 children: [
                   Obx(
                   ()=> formWidget(
-                    readOnly: true,
                         title: 'Business Name*',hint: controller.userLoginModelFromSession.value.userDetailModel.businessName,textEditingController: controller.businessNameTEController.value),
                   ),
                  /* Obx(
@@ -153,7 +155,7 @@ Widget _getBody(BuildContext context){
                   Obx(()=> formWidget(
                         onChanged: controller.phoneValidation,
                         keyBoardInput: TextInputType.phone,
-                        title: 'Phone Number*',hint: 'Phone Number',textEditingController: controller.phNoTEController.value),
+                        title: 'Phone Number*',hint: '+1 604 555 5555',textEditingController: controller.phNoTEController.value),
                   ),
                   Obx(
                         ()=> Visibility(
@@ -173,6 +175,35 @@ Widget _getBody(BuildContext context){
                       },
 
                       child: Obx(()=>formWidget(title: 'Business Address*',hint: 'address',textEditingController: controller.businessAddTEController.value))),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: titleWidget(title: 'Select Category'),
+                  ),
+                      dropDown(),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Obx(
+                        ()=> SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for(int i=0;i<controller.listOfSelectedIndex.length;i++)
+                              selectedCategoryWidget(controller.listOfSelectedIndex[i]),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  Obx(
+                        ()=> Visibility(
+                      visible: controller.categoryErrorVisible.value,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 20),
+                        child: Text(controller.categoryErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                      ),
+                    ),
+                  ),
                   Obx(()=> descriptionContainer(title: 'Description*',hint: 'Write about you',textEditingController: controller.descriptionTEController.value,onChanged: controller.descriptionValidation)),
                   Obx(
                         ()=> Visibility(
@@ -189,7 +220,7 @@ Widget _getBody(BuildContext context){
                       children: [
                         Expanded(child: primaryButton(
                             onPressed: (){
-                              Get.back();
+                              Get.offNamed(kVendorHomeScreen);
                             },
                             buttonText: 'Cancel',color: AppColors.primary,textColor: AppColors.white,height: 40,fontSize: 18)),
                         Expanded(child: primaryButton(
@@ -321,24 +352,61 @@ Widget formWidget(
                   ),
                 ),
                 Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: primaryButton(
+                          color: AppColors.primary,
+                          height: 37,
+                          onPressed: () async{
+                            Prediction? p = await PlacesAutocomplete.show(
+                                context: context,
+                                apiKey: controller.kGoogleApiKey,
+                                mode: controller.mode,
+                                language: 'en',
+                                strictbounds: false,
+                                types: [""],
+                                decoration: InputDecoration(
+                                    hintText: 'Search',
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Colors.white))),
+                                components: [Component(Component.country,"pk"),Component(Component.country,"usa")]);
+                            controller.displayPrediction(p!);
+                          }, buttonText: 'Search Place',textColor: AppColors.white),
+                    ),
                     Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
                         child: Container(
                           height: 250,
-                          child: GoogleMap(
+                          child:  Obx(()=>GoogleMap(
+                            zoomGesturesEnabled: true, //enable Zoom in, out on map
                             onMapCreated: (GoogleMapController googleMapController){
+                              controller.googleMapController=googleMapController;
                               if(controller.gController.isCompleted){}else {
-                              controller.gController
-                                  .complete(googleMapController);
-                            }
-                          },
-                              mapType: MapType.normal,
-                              markers: Set<Marker>.of(controller.markers),
+                                controller.gController
+                                    .complete(googleMapController);
+                              }
+                            },
+                            mapType: MapType.normal,
+                            markers: Set<Marker>.of(controller.markers),
                             initialCameraPosition: CameraPosition(
                               target: LatLng(controller.latLng!.latitude, controller.latLng!.longitude),
                               zoom: 14.4746,
-                            )
+                            ),
+                            onTap: (LatLng latLng){
+                              controller.listOfMarkers.clear();
+                              controller.markers.clear();
+                              Marker newMarker=Marker(
+                                icon:BitmapDescriptor.fromBytes((controller.markerIcon)),
+                                markerId: const MarkerId('1'),
+                                position: LatLng(latLng.latitude, latLng.longitude),
+                                infoWindow:InfoWindow(title: controller.address.value),
+                              );
+                              controller.latLng!.latitude!=latLng.latitude;
+                              controller.latLng!.longitude!=latLng.longitude;
+                              controller.markers.add(newMarker);
+                            },
+                          ),
                           ),
 
                           /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/)
@@ -364,5 +432,66 @@ Widget formWidget(
               ]
           );
         }, context: context);
+  }
+
+  Widget dropDown(){
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 5),
+      child: Obx(
+            ()=> Container(
+          width: Get.width,
+          height: 50,
+          decoration: BoxDecoration(
+              color: AppColors.textFieldBackground,
+              borderRadius: BorderRadius.circular(5)
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<CategoryModel>(
+              isExpanded: true,
+              borderRadius: BorderRadius.circular(8),
+              value: controller.categoryModelDropDownInitialValue.value,
+              elevation: 0,
+              style: const TextStyle(color: Colors.white),
+              iconEnabledColor:Colors.black,
+              items: controller.items.map<DropdownMenuItem<CategoryModel>>((value) {
+                return DropdownMenuItem<CategoryModel>(
+                  value: value,
+                  child: Text(value.name,style:const TextStyle(color:Colors.black),),
+                );
+              }).toList(),
+              onChanged: (CategoryModel? value) {
+                controller.onChangeDropdownForCategoryTitle(value!);
+
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget selectedCategoryWidget(CategoryModel categoryModel){
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5,vertical: 7),
+        decoration: BoxDecoration(
+          color: AppColors.textFieldBackground,
+          borderRadius: BorderRadius.circular(5)
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+           Text(categoryModel.name),
+            GestureDetector(
+                onTap: (){
+                  controller.listOfSelectedIndex.remove(categoryModel);
+                },
+                child: Icon(Icons.close,color: AppColors.darkPink,size: 17,))
+          ],
+        ),
+      ),
+    );
   }
 }

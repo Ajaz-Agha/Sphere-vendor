@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_webservice/places.dart';
 import 'package:sphere_vendor/controller/add_promo_screen_controller.dart';
 import 'package:sphere_vendor/model/category_model.dart';
 import 'package:sphere_vendor/screens/custom_widget/custom_navigation_drawer.dart';
@@ -159,8 +161,9 @@ Widget _getBody(BuildContext context){
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   formWidget(
+                    focusNode:controller.productNameFocusNode,
                       onChanged: controller.pNameValidation,
-                      title: 'Product Name*',hint: 'Luxury Chair',textEditingController: controller.productNameTEController),
+                      title: 'Product Name*',hint: 'product name',textEditingController: controller.productNameTEController),
                   Obx(
                         ()=> Visibility(
                       visible: controller.productNameErrorVisible.value,
@@ -173,6 +176,7 @@ Widget _getBody(BuildContext context){
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           formWidget(
+                              focusNode:controller.priceFocusNode,
                             keyBoardInput: TextInputType.number,
                               onChanged: controller.priceValidation,
                               title: 'Price*',hint: '\$1000',textEditingController: controller.priceTEController),
@@ -188,10 +192,13 @@ Widget _getBody(BuildContext context){
                       Expanded(child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          formWidget(
-                              keyBoardInput: TextInputType.number,
-                              onChanged: controller.discountValidation,
-                              title: 'Discount*',hint: '\$500',textEditingController: controller.discountTEController),
+                          Obx(()=> formWidget(
+                            focusNode: controller.discountFocusNode,
+                                keyBoardInput: TextInputType.number,
+                                onChanged: controller.discountValidation,
+                                enabled: controller.isDiscount.value,
+                                title: 'Discount*',hint: controller.isPercentage.value?"10%":'\$500',textEditingController: controller.discountTEController),
+                          ),
                           Obx(
                                 ()=> Visibility(
                               visible: controller.discountErrorVisible.value,
@@ -209,6 +216,7 @@ Widget _getBody(BuildContext context){
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           formWidget(
+                            focusNode: controller.discountStartFocusNode,
                               onChanged: controller.discountStartDateValidation,
                               title: 'Discount Start Date*',hint: '1989-03-23',textEditingController: controller.discountStartTEController),
                           Obx(
@@ -224,6 +232,7 @@ Widget _getBody(BuildContext context){
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           formWidget(
+                            focusNode: controller.discountEndFocusNode,
                               onChanged: controller.discountEndDateValidation,
                               title: 'Discount Last Date*',hint: 'date',textEditingController: controller.discountEndTEController),
                           Obx(
@@ -250,7 +259,9 @@ Widget _getBody(BuildContext context){
                         controller.markers.addAll(controller.listOfMarkers);
                         showBottomSheet(context);
                       },
-                      child: Obx(()=>formWidget(title: 'Business Address*',hint: 'Luxury Chair',textEditingController: controller.businessAddressTEController.value,onChanged: controller.businessAddValidation))),
+                      child: Obx(()=>formWidget(
+                          focusNode: controller.businessAddressFocusNode,
+                          title: 'Business Address*',hint: '',textEditingController: controller.businessAddressTEController.value,onChanged: controller.businessAddValidation))),
                   Obx(
                         ()=> Visibility(
                       visible: controller.businessAddressErrorVisible.value,
@@ -316,7 +327,9 @@ Widget optionStatus(Color color, String title){
         required String hint,
         dynamic onChanged,
         dynamic readonly,
+        dynamic enabled,
         TextInputType? keyBoardInput,
+        required FocusNode focusNode,
         required TextEditingController textEditingController}){
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -328,11 +341,17 @@ Widget optionStatus(Color color, String title){
           customTextField(
             controller: textEditingController,
               onChanged: onChanged,
+              focusNode: focusNode,
               keyBoardType: keyBoardInput,
               readOnly: title.contains('Discount Start Date')||title.contains('Discount Last Date')?true:false,
-              enabled:title.contains('Business Address')?false:true,
+              enabled:title.contains('Business Address')?false:enabled??true,
               hintText: hint,suffixIcon: 
           title.contains('Business Address')?Icon(Icons.location_on,color: AppColors.darkPink,):
+              title.contains('Discount*')?GestureDetector(
+                  onTap: (){
+                    controller.isPercentage.value=!controller.isPercentage.value;
+                  },
+                  child: Icon(controller.isPercentage.value?Icons.percent:Icons.attach_money,color: AppColors.darkPink,size: 17,)):
           title.contains('Discount Start Date')||title.contains('Discount Last Date')?GestureDetector(
               onTap: (){
                 controller.selectDate(textEditingController);
@@ -463,13 +482,36 @@ Widget optionStatus(Color color, String title){
                   ),
                 ),
                 Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
-                        child: Container(
-                          height: 250,
-                          child:  GoogleMap(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: primaryButton(
+                        color: AppColors.primary,
+                          height: 37,
+                          onPressed: () async{
+                        Prediction? p = await PlacesAutocomplete.show(
+                            context: context,
+                            apiKey: controller.kGoogleApiKey,
+                            mode: controller.mode,
+                            language: 'en',
+                            strictbounds: false,
+                            types: [""],
+                            decoration: InputDecoration(
+                                hintText: 'Search',
+                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Colors.white))),
+                            components: [Component(Component.country,"pk"),Component(Component.country,"usa")]);
+                        controller.displayPrediction(p!);
+                      }, buttonText: 'Search Place',textColor: AppColors.white),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
+                      child: Container(
+                        height: 250,
+                        child:  Obx(()=>GoogleMap(
+                              zoomGesturesEnabled: true, //enable Zoom in, out on map
                               onMapCreated: (GoogleMapController googleMapController){
+                                controller.googleMapController=googleMapController;
                                 if(controller.gController.isCompleted){}else {
                                   controller.gController
                                       .complete(googleMapController);
@@ -480,11 +522,25 @@ Widget optionStatus(Color color, String title){
                               initialCameraPosition: CameraPosition(
                                 target: LatLng(controller.latLng!.latitude, controller.latLng!.longitude),
                                 zoom: 14.4746,
-                              )
+                              ),
+                            onTap: (LatLng latLng){
+                              controller.listOfMarkers.clear();
+                              controller.markers.clear();
+                              Marker newMarker=Marker(
+                              icon:BitmapDescriptor.fromBytes((controller.markerIcon)),
+                              markerId: const MarkerId('1'),
+                              position: LatLng(latLng.latitude, latLng.longitude),
+                              infoWindow:InfoWindow(title: controller.address.value),
+                              );
+                              controller.latLng!.latitude!=latLng.latitude;
+                              controller.latLng!.longitude!=latLng.longitude;
+                                controller.markers.add(newMarker);
+                            },
                           ),
+                        ),
 
-                          /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/)
-                    ),
+                        /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/)
+                      ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       child: Row(

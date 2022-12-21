@@ -141,12 +141,14 @@ Widget customTextField(
       double radius = 8,
       TextEditingController? controller,
       bool isMultiLine = false,
+      FocusNode? focusNode,
       double height = 52}) {
   return SizedBox(
     height: isMultiLine ? null : height,
     child: TextField(
       enabled: enabled,
       readOnly: readOnly,
+      focusNode: focusNode,
       controller: controller,
       obscureText: showpassword,
       textAlign: maxLength != null ? TextAlign.center : TextAlign.start,

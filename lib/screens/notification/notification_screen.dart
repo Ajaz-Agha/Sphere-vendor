@@ -18,42 +18,51 @@ class NotificationScreen extends GetView<NotificationScreenController>{
     );
   }
   Widget _getBody(){
-    return Obx(
-        ()=> Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20,horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: (){
-                    controller.onBackPressed();
-                  },
-                    child: Icon(Icons.arrow_back,size: 25,color: AppColors.primary,)),
-                Text(controller.text,style: heading1SemiBold(color: AppColors.primary,fontSize: 20)),
-                const SizedBox()
-              ],
-            ),
-          ),
-          controller.listOfNotifications.isNotEmpty?
-          Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children:[
-                    for(int i=0;i<controller.listOfNotifications.length;i++)
-                    showNotificationWidget(imageUrl:controller.listOfNotifications[i].userDetailModel.profileImageUrl,name:controller.listOfNotifications[i].userDetailModel.firstName!=''?controller.listOfNotifications[i].userDetailModel.firstName:controller.listOfNotifications[i].userDetailModel.uAccEmail,description: controller.listOfNotifications[i].body, time: controller.listOfNotifications[i].createdAt),
+    return Stack(
+      children: [
+        imageIcon(img: 'splash_screen_bg2.png',size: 150),
+        Align(
+          alignment: Alignment.bottomRight,
+          child: imageIcon(img: 'splash_screen_bg3.png',size: 100),
+        ),
+        Obx(
+            ()=> Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20,horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: (){
+                        controller.onBackPressed();
+                      },
+                        child: Icon(Icons.arrow_back,size: 25,color: AppColors.primary,)),
+                    Text(controller.text,style: heading1SemiBold(color: AppColors.primary,fontSize: 20)),
+                    const SizedBox()
                   ],
                 ),
-              )):Center(child: showEmptyListMessage(message: 'No Notification Found'),)
-        ],
-      ),
+              ),
+              controller.listOfNotifications.isNotEmpty?
+              Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children:[
+                        for(int i=0;i<controller.listOfNotifications.length;i++)
+                        showNotificationWidget(imageUrl:controller.listOfNotifications[i].userDetailModel.profileImageUrl,name:controller.listOfNotifications[i].userDetailModel.firstName!=''?controller.listOfNotifications[i].userDetailModel.firstName:controller.listOfNotifications[i].userDetailModel.uAccEmail,description: controller.listOfNotifications[i].body, time: controller.listOfNotifications[i].createdAt),
+                      ],
+                    ),
+                  )):Center(child: showEmptyListMessage(message: 'No Notification Found'),)
+            ],
+          ),
+        ),
+      ],
     );
   }
 
   Widget showNotificationWidget({required String name,required String description, required String time,required String imageUrl}){
-    Color backGroundColor=AppColors.lightContainerColor;
+    Color backGroundColor=Colors.transparent;
     Color textColor=AppColors.textNotificationColor;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),

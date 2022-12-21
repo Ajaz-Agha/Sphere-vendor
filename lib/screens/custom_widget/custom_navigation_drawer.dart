@@ -60,8 +60,8 @@ class CustomNavigationDrawer extends GetView<CustomNavigationDrawerController>{
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Obx(()=> Text(controller.userLoginModel.value.userDetailModel.uAccEmail,style: heading1(color: AppColors.primary,fontSize: 16),)),
-                                Obx(()=>Text(controller.userLoginModel.value.userDetailModel.businessName,style: heading1(color: AppColors.primary,fontSize: 10,fontWeight: FontWeight.w300),)),
+                                Obx(()=> Text(controller.userLoginModel.value.userDetailModel.uAccEmail,style: heading1(color: AppColors.primary,fontSize: 14),)),
+                                Obx(()=>Text(controller.userLoginModel.value.userDetailModel.businessName,style: heading1(color: AppColors.primary,fontSize: 20,fontWeight: FontWeight.w300),)),
                               ],
                             ),
                           )

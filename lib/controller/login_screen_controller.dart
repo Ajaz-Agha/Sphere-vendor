@@ -1,10 +1,8 @@
-import 'dart:developer';
-
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+//import 'package:google_sign_in/google_sign_in.dart';
 import '../model/user_login_model.dart';
 import '../screens/custom_widget/custom_dialog.dart';
 import '../screens/custom_widget/custom_proggress_dialog.dart';
@@ -125,12 +123,18 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
         if (userLoginModel.token.isNotEmpty && userLoginModel.userDetailModel.role=='vendor') {
           userSession.createSession(userLoginModel: userLoginModel);
           pd.dismissDialog();
-          Get.offAllNamed(kVendorHomeScreen);
+          if(userLoginModel.userDetailModel.firstName!='' && userLoginModel.userDetailModel.lastName!='' && userLoginModel.userDetailModel.phone!=''){
+            Get.offAllNamed(kVendorHomeScreen);
+          }else {
+            Get.offAllNamed(kVendorProfileScreen);
+          }
         } else if(userLoginModel.userDetailModel.role=='vendor'){
           pd.dismissDialog();
           CustomDialogs().showMessageDialog(title: "Alert",
               description: 'Email belongs to User',
               type: DialogType.ERROR);
+        }else if(userLoginModel.requestErrorMessage=='Please verify your account'){
+          Get.offNamed(kEmailVerificationScreen,arguments: emailTEController.text);
         }else {
           pd.dismissDialog();
           CustomDialogs().showMessageDialog(title: "Alert",
@@ -147,11 +151,11 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
   }
 
   Future<void> onGoogleSignIn() async{
-    GoogleSignIn googleSignIn = GoogleSignIn();
+    /*GoogleSignIn googleSignIn = GoogleSignIn();
     try {
       await googleSignIn.signIn();
     } catch (error) {
-    }
+    }*/
   }
 
 

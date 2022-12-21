@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_webservice/places.dart';
 import 'package:sphere_vendor/model/category_model.dart';
 import 'package:sphere_vendor/model/link_model.dart';
 import 'package:sphere_vendor/screens/custom_widget/custom_navigation_drawer.dart';
@@ -427,24 +429,61 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                   ),
                 ),
                 Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: primaryButton(
+                          color: AppColors.primary,
+                          height: 37,
+                          onPressed: () async{
+                            Prediction? p = await PlacesAutocomplete.show(
+                                context: context,
+                                apiKey: controller.kGoogleApiKey,
+                                mode: controller.mode,
+                                language: 'en',
+                                strictbounds: false,
+                                types: [""],
+                                decoration: InputDecoration(
+                                    hintText: 'Search',
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Colors.white))),
+                                components: [Component(Component.country,"pk"),Component(Component.country,"usa")]);
+                            controller.displayPrediction(p!);
+                          }, buttonText: 'Search Place',textColor: AppColors.white),
+                    ),
+                    Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
-                        child: SizedBox(
+                        child: Container(
                           height: 250,
-                          child: GoogleMap(
-                              onMapCreated: (GoogleMapController googleMapController){
-                                if(controller.gController.isCompleted){}else {
-                                  controller.gController
-                                      .complete(googleMapController);
-                                }
-                              },
-                              mapType: MapType.normal,
-                              markers: Set<Marker>.of(controller.markers),
-                              initialCameraPosition: CameraPosition(
-                                target: LatLng(controller.latLng!.latitude, controller.latLng!.longitude),
-                                zoom: 14.4746,
-                              )
+                          child:  Obx(()=>GoogleMap(
+                            zoomGesturesEnabled: true, //enable Zoom in, out on map
+                            onMapCreated: (GoogleMapController googleMapController){
+                              controller.googleMapController=googleMapController;
+                              if(controller.gController.isCompleted){}else {
+                                controller.gController
+                                    .complete(googleMapController);
+                              }
+                            },
+                            mapType: MapType.normal,
+                            markers: Set<Marker>.of(controller.markers),
+                            initialCameraPosition: CameraPosition(
+                              target: LatLng(controller.latLng!.latitude, controller.latLng!.longitude),
+                              zoom: 14.4746,
+                            ),
+                            onTap: (LatLng latLng){
+                              controller.listOfMarkers.clear();
+                              controller.markers.clear();
+                              Marker newMarker=Marker(
+                                icon:BitmapDescriptor.fromBytes((controller.markerIcon)),
+                                markerId: const MarkerId('1'),
+                                position: LatLng(latLng.latitude, latLng.longitude),
+                                infoWindow:InfoWindow(title: controller.address.value),
+                              );
+                              controller.latLng!.latitude!=latLng.latitude;
+                              controller.latLng!.longitude!=latLng.longitude;
+                              controller.markers.add(newMarker);
+                            },
+                          ),
                           ),
 
                           /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/)

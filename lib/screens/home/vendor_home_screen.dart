@@ -42,7 +42,9 @@ class VendorHomeScreen extends GetView<VendorHomeScreenController>{
                           ()=> Container(
                         height: 180,
                         decoration: BoxDecoration(
-                            image: DecorationImage(image: controller.userFromService.value.coverImageUrl!=''?NetworkImage(controller.userFromService.value.coverImageUrl):controller.userLoginModel.value.userDetailModel.coverImageUrl!=''?NetworkImage(controller.userLoginModel.value.userDetailModel.coverImageUrl):AssetImage(Img.get('empty.png')) as ImageProvider,fit: BoxFit.cover),
+                            image: DecorationImage(image: controller.userFromService.value.coverImageUrl!=''?NetworkImage(controller.userFromService.value.coverImageUrl):controller.userLoginModel.value.userDetailModel.coverImageUrl!=''?NetworkImage(controller.userLoginModel.value.userDetailModel.coverImageUrl):AssetImage(Img.get('sphere_logo.png')) as ImageProvider,fit:
+                            controller.userFromService.value.coverImageUrl==''&&controller.userLoginModel.value.userDetailModel.coverImageUrl==''
+                            ?BoxFit.contain:BoxFit.cover),
                             borderRadius: const BorderRadius.only(bottomRight: Radius.circular(20),bottomLeft: Radius.circular(20))
                         ),
                         padding: const EdgeInsets.all(20),

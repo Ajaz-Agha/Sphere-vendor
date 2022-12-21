@@ -68,10 +68,12 @@ class LoginScreen extends GetView<LoginScreenController>{
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 20),
-              child:  customTextField(
-                  onChanged: controller.emailValidation,
-                  controller: controller.emailTEController,
-                  hintText: "Email",prefexIcon: Icon(Icons.mail_outline,size: 15,color: AppColors.black,),color: AppColors.lightPink,suffixIcon: Icon(Icons.check_circle,color: AppColors.lightPink,size: 15,)),),
+              child:  Obx(
+                  ()=>customTextField(
+                    onChanged: controller.emailValidation,
+                    controller: controller.emailTEController,
+                    hintText: "Email",prefexIcon: Icon(Icons.mail_outline,size: 15,color: AppColors.black,),color: AppColors.lightPink,suffixIcon: Icon(Icons.check_circle,color: controller.emailErrorVisible.value?AppColors.lightPink:AppColors.darkPink,size: 15,)),
+              ),),
             Obx(
                   ()=> Visibility(
                 visible: controller.emailErrorVisible.value,

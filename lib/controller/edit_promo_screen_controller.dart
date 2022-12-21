@@ -4,11 +4,14 @@ import 'dart:typed_data';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geocoding/geocoding.dart';
 import 'dart:ui' as ui;
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:google_api_headers/google_api_headers.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_webservice/places.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -43,6 +46,10 @@ class EditPromoScreenController extends GetxController{
   RxList<CategoryModel> items=<CategoryModel>[].obs;
   double latitude=0.0;
   double longitude=0.0;
+  GoogleMapController? googleMapController;
+  final Mode mode = Mode.overlay;
+  String kGoogleApiKey='AIzaSyD8yp_8gVLUooY70FAh8Qvdk7JYANgbOio';
+
 
   FocusNode productNameFocusNode = FocusNode(),
       priceFocusNode = FocusNode(),discountFocusNode=FocusNode(),descFocusNode=FocusNode(),
@@ -98,12 +105,23 @@ class EditPromoScreenController extends GetxController{
 
   }
 
-  /*void addNewLink(SocialLinkModel socialLinkModel) {
-    if(linkList.length<3) {
-      linkList.add(socialLinkModel);
-    }else{
-    }
-  }*/
+  Future<void> displayPrediction(Prediction p) async {
+    GoogleMapsPlaces places = GoogleMapsPlaces(
+        apiKey: kGoogleApiKey,
+        apiHeaders: await const GoogleApiHeaders().getHeaders()
+    );
+
+    PlacesDetailsResponse detail = await places.getDetailsByPlaceId(p.placeId!);
+    final lat = detail.result.geometry!.location.lat;
+    final lng = detail.result.geometry!.location.lng;
+    markers.clear();
+    markers.add(Marker(markerId: const MarkerId("1"),position: LatLng(lat, lng),infoWindow: InfoWindow(title: detail.result.name),icon:BitmapDescriptor.fromBytes((markerIcon)),));
+    address.value=detail.result.name;
+    latitude=lat;
+    longitude=lng;
+    googleMapController?.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lng), 14.0));
+
+  }
 
   void removeFocus(){
     if(productNameFocusNode.hasFocus) {
@@ -373,7 +391,7 @@ class EditPromoScreenController extends GetxController{
 
   Uint8List? markerImage;
 
-  List<Marker> markers=[];
+  RxList<Marker> markers=<Marker>[].obs;
   List<Marker> listOfMarkers=[
   ];
 

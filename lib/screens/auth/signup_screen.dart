@@ -43,10 +43,11 @@ class SignupScreen extends GetView<SignUpScreenController>{
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 20),
-              child:  customTextField(
-                controller: controller.businessController,
-                  onChanged: controller.businessValidation,
-                  hintText: "Business name",prefexIcon: Icon(Icons.person_pin_rounded,size: 15,color: AppColors.black,),color: AppColors.lightPink,suffixIcon: Icon(Icons.check_circle,color: AppColors.lightPink,size: 15,)),),
+              child:  Obx(()=>customTextField(
+                  controller: controller.businessController,
+                    onChanged: controller.businessValidation,
+                    hintText: "Business name",prefexIcon: Icon(Icons.person_pin_rounded,size: 15,color: AppColors.black,),color: AppColors.lightPink,suffixIcon: Icon(Icons.check_circle,color: controller.businessErrorMsgVisibility.value?AppColors.lightPink:AppColors.darkPink,size: 15,)),
+              ),),
             Obx(
                   ()=> Visibility(
                 visible: controller.businessErrorMsgVisibility.value,
@@ -58,10 +59,11 @@ class SignupScreen extends GetView<SignUpScreenController>{
             ),
             Padding(
               padding: const EdgeInsets.only(top: 20),
-              child:  customTextField(
-                  onChanged: controller.emailValidation,
-                  controller: controller.emailController,
-                  hintText: "Email",prefexIcon: Icon(Icons.mail_outline,size: 15,color: AppColors.black,),color: AppColors.lightPink,suffixIcon: Icon(Icons.check_circle,color: AppColors.lightPink,size: 15,)),),
+              child:  Obx(()=>customTextField(
+                    onChanged: controller.emailValidation,
+                    controller: controller.emailController,
+                    hintText: "Email",prefexIcon: Icon(Icons.mail_outline,size: 15,color: AppColors.black,),color: AppColors.lightPink,suffixIcon: Icon(Icons.check_circle,color: controller.emailErrorMsgVisibility.value?AppColors.lightPink:AppColors.darkPink,size: 15,)),
+              ),),
             Obx(
                   ()=> Visibility(
                 visible: controller.emailErrorMsgVisibility.value,

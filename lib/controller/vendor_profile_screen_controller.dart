@@ -1,19 +1,22 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:google_api_headers/google_api_headers.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_webservice/places.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sphere_vendor/model/location_model.dart';
 import 'package:sphere_vendor/screens/custom_widget/myWidgets.dart';
+import '../model/category_model.dart';
 import '../model/user_login_model.dart';
 import '../screens/custom_widget/custom_dialog.dart';
 import '../screens/custom_widget/custom_proggress_dialog.dart';
@@ -21,6 +24,7 @@ import '../utils/app_constants.dart';
 import '../utils/common_code.dart';
 import '../utils/permission_handler.dart';
 import '../utils/user_session_management.dart';
+import '../web_services/general_service.dart';
 import '../web_services/user_service.dart';
 
 class VendorProfileScreenController extends GetxController{
@@ -48,14 +52,20 @@ class VendorProfileScreenController extends GetxController{
   RxString fNameErrorMsg = "".obs;
   RxBool lNameErrorVisible = RxBool(false);
   RxString lNameErrorMsg = "".obs;
+  RxBool categoryErrorVisible = RxBool(false);
+  RxString categoryErrorMsg = "".obs;
   RxBool phoneErrorVisible = RxBool(false);
   RxString phoneErrorMsg = "".obs;
   RxBool descriptionErrorVisible = RxBool(false);
   RxString descriptionErrorMsg = "".obs;
   RxBool businessNameErrorVisible = RxBool(false);
   RxString businessNameErrorMsg = "".obs;
+  RxList<CategoryModel> items=<CategoryModel>[].obs;
 
   UserSession userSession = UserSession();
+  GoogleMapController? googleMapController;
+  final Mode mode = Mode.overlay;
+  String kGoogleApiKey='AIzaSyD8yp_8gVLUooY70FAh8Qvdk7JYANgbOio';
 
  CameraPosition kGooglePlex = const CameraPosition(
     target: LatLng(37.42796133580664, -122.085749655962),
@@ -66,30 +76,34 @@ class VendorProfileScreenController extends GetxController{
 
  Uint8List? markerImage;
 
- List<Marker> markers=[];
+  RxList<Marker> markers=<Marker>[].obs;
  List<Marker> listOfMarkers=[
  ];
 
   RxString address = ''.obs;
+  RxString selection=''.obs;
+  RxList<CategoryModel> listOfSelectedIndex=<CategoryModel>[].obs;
+  Rx<CategoryModel> categoryModelDropDownInitialValue =CategoryModel.empty().obs;
 
  
 
  Future<void> getByteFromAsset(String path, int width) async{
-   print('-------------------$path');
    ByteData byteData=await rootBundle.load(path);
    ui.Codec codec=await ui.instantiateImageCodec(byteData.buffer.asUint8List(),targetHeight: width);
    ui.FrameInfo fi=await codec.getNextFrame();
    markerIcon= (await fi.image.toByteData(format:ui.ImageByteFormat.png))!.buffer.asUint8List();
-   print('-----------::: ${markerIcon}');
  }
 
  Future<void> getCurrentPosition() async{
    bool serviceEnabled;
    LocationPermission permission;
    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-   if (!serviceEnabled) {
-     return Future.error('Location services are disabled.');
-   }
+     if (!serviceEnabled) {
+       CustomDialogs().showMessageDialog(title: 'Alert',
+           description:'Location services are disabled, Please Turn on Location',
+           type: DialogType.ERROR);
+     }
+
 
    permission = await Geolocator.checkPermission();
    if (permission == LocationPermission.denied) {
@@ -107,16 +121,48 @@ class VendorProfileScreenController extends GetxController{
    }
    latLng=await Geolocator.getCurrentPosition();
    getAddressFromLatLong(latLng!);
-   print('----------------------->>${latLng!.latitude.toString()}');
  }
+
+  Future<void> displayPrediction(Prediction p) async {
+    GoogleMapsPlaces places = GoogleMapsPlaces(
+        apiKey: kGoogleApiKey,
+        apiHeaders: await const GoogleApiHeaders().getHeaders()
+    );
+
+    PlacesDetailsResponse detail = await places.getDetailsByPlaceId(p.placeId!);
+    final lat = detail.result.geometry!.location.lat;
+    final lng = detail.result.geometry!.location.lng;
+    markers.clear();
+    markers.add(Marker(markerId: const MarkerId("1"),position: LatLng(lat, lng),infoWindow: InfoWindow(title: detail.result.name),icon:BitmapDescriptor.fromBytes((markerIcon)),));
+    address.value=detail.result.name;
+    latLng!.latitude!=lat;
+    latLng!.longitude!=lng;
+    googleMapController?.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lng), 14.0));
+
+  }
 
   Future<void> getAddressFromLatLong(Position position)async {
     List<Placemark> placeMarks = await placemarkFromCoordinates(position.latitude, position.longitude);
-    print(placeMarks);
     Placemark place = placeMarks[0];
     address.value= '${place.locality}';
-    print('===========================>> $address');
 
+  }
+  Future<void> getCategory() async{
+    dynamic response=await GeneralService().getCategory();
+    if(response is List<CategoryModel>){
+      categoryModelDropDownInitialValue.value = CategoryModel(response.first.name, response.first.id);
+      items.add(categoryModelDropDownInitialValue.value);
+      for(CategoryModel item in response){
+        items.add(CategoryModel(item.name,item.id));
+      }
+    }
+  }
+  void onChangeDropdownForCategoryTitle(CategoryModel categoryModel) {
+    categoryModelDropDownInitialValue.value = categoryModel;
+    //items.remove(categoryModelDropDownInitialValue.value);
+    if(!listOfSelectedIndex.contains(categoryModel)) {
+      listOfSelectedIndex.add(categoryModel);
+    }
   }
 
 
@@ -141,6 +187,7 @@ class VendorProfileScreenController extends GetxController{
   @override
   void onInit() {
     getUserFromSession();
+    getCategory();
     getByteFromAsset(Img.get('location_icon.png'), 100);
     super.onInit();
   }
@@ -165,6 +212,7 @@ class VendorProfileScreenController extends GetxController{
 
   Future<void> getUserFromSession() async{
     userLoginModelFromSession.value=await userSession.getUserLoginModel();
+    print('======================>>>${userLoginModelFromSession.value.userDetailModel.locationModel.toString()}');
     emailTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.uAccEmail);
     businessNameTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.businessName);
     if(userLoginModelFromSession.value.userDetailModel.firstName!=''){
@@ -239,6 +287,7 @@ Future<void> onUploadImage() async{
           File file = File(pickedImage.path);
           File compressedImage = await CommonCode().compressImage(file);
           photoImage.value=compressedImage;
+          userLoginModelFromSession.value.userDetailModel.profileImageUrl='';
           if (await CommonCode().checkInternetConnection()) {
             /* var result = await UserService().updateProfilePhoto(userAccountId: AppSettings.userLoginModel.value.uAccId, imgPath: compressedImage.path);
             if(result is ResponseModel){
@@ -306,6 +355,7 @@ Future<void> onUploadImage() async{
           File file = File(pickedImage.path);
           File compressedImage = await CommonCode().compressImage(file);
           coverPhotoImage.value=compressedImage;
+          userLoginModelFromSession.value.userDetailModel.coverImageUrl='';
           if (await CommonCode().checkInternetConnection()) {
             /* var result = await UserService().updateProfilePhoto(userAccountId: AppSettings.userLoginModel.value.uAccId, imgPath: compressedImage.path);
             if(result is ResponseModel){
@@ -367,13 +417,24 @@ Future<void> onUploadImage() async{
     return lNameErrorVisible.value;
   }
 
+  bool categoryValidation(List<CategoryModel> value) {
+    if (value.isEmpty) {
+        categoryErrorMsg.value = "Category is Required!";
+        categoryErrorVisible.value = true;
+    } else {
+      categoryErrorVisible.value = false;
+      categoryErrorMsg.value = "";
+    }
+    return categoryErrorVisible.value;
+  }
+
   bool phoneValidation(String value) {
     if (value.trim() == "") {
       if(phNoTEController.value.text.isEmpty){
         phoneErrorMsg.value = "Phone number is required!";
         phoneErrorVisible.value = true;
       }
-    } else if (phNoTEController.value.text.length<11 || phNoTEController.value.text.length>11) {
+    } else if (!RegExp(r'^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$').hasMatch(value)) {
       phoneErrorVisible.value = true;
       phoneErrorMsg.value = "Invalid Phone Number";
     } else {
@@ -404,6 +465,7 @@ Future<void> onUploadImage() async{
     isAllDataValid = !fNameValidation(fNameTEController.value.text);
     isAllDataValid = !lNameValidation(lNameTEController.value.text) && isAllDataValid;
     isAllDataValid = !phoneValidation(phNoTEController.value.text) && isAllDataValid;
+    isAllDataValid = !categoryValidation(listOfSelectedIndex) && isAllDataValid;
     isAllDataValid = !descriptionValidation(descriptionTEController.value.text) && isAllDataValid;
     if(isAllDataValid){
       userLoginModel.userDetailModel.profileImage=photoImage.value.path.split('/').reversed.first;
@@ -447,6 +509,9 @@ Future<void> onUploadImage() async{
       if(await CommonCode().checkInternetAccess()) {
         String response=await UserService().updateLocation(locationModel: locationModel);
         if (response=='Location Updated successfully') {
+          userLoginModelFromSession.value.userDetailModel.locationModelList.add(locationModel);
+          locationModel.isDefault=1;
+          userSession.updateSessionData(userLoginModelFromSession.value);
           pd.dismissDialog();
         } else {
           pd.dismissDialog();
