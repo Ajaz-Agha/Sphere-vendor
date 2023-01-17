@@ -46,6 +46,34 @@ class UserService{
     return userLoginModel;
   }
 
+  Future<UserLoginModel> socialLoginUser({String email="",required deviceToken,String businessName=''})async{
+    UserLoginModel userLoginModel = UserLoginModel.empty();
+    Map<String,String> requestBody = {
+      "email":email,
+      "role":'vendor',
+      "device_id":deviceToken,
+      "business_name":businessName,
+    };
+    ResponseModel responseModel = await _httpClient.postRequest(url: kSocialLoginURL,
+        requestBody: requestBody,needHeaders: false);
+    if((responseModel.statusCode == 400 || responseModel.statusCode == 500 )){
+      userLoginModel.requestErrorMessage = kNetworkError;
+      return userLoginModel;
+    }else if(responseModel.statusCode == 408){
+      userLoginModel.requestErrorMessage = kPoorInternetConnection;
+      return userLoginModel;
+    }else if(( responseModel.statusCode == 606||responseModel.statusCode == 404) && responseModel.statusDescription.contains("Invalid Input")){
+      userLoginModel.requestErrorMessage = "Invalid Username or Password!";
+      return userLoginModel;
+    }else if(responseModel.statusDescription=="Social Login Success"  && responseModel.data != null && responseModel.data.length > 0){
+      userLoginModel = UserLoginModel.fromJSON(responseModel.data,responseModel.statusDescription);
+      return userLoginModel;
+
+    }
+    userLoginModel.requestErrorMessage = responseModel.statusDescription;
+    return userLoginModel;
+  }
+
   Future<UserRegisterModel> registerUser(UserRegisterModel userRegisterModel)async{
     Map<String,dynamic> requestBody = userRegisterModel.toJson();
     ResponseModel responseModel = await _httpClient.postRequest(url: kRegisterUserURL,

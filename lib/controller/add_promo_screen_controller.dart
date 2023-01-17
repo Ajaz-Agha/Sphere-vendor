@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:awesome_dialog/awesome_dialog.dart';
@@ -17,6 +18,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:sphere_vendor/model/category_model.dart';
 import 'package:sphere_vendor/model/link_model.dart';
 import 'package:sphere_vendor/model/promo_model.dart';
+import 'package:sphere_vendor/screens/custom_widget/textStyle.dart';
 import 'package:sphere_vendor/utils/app_colors.dart';
 import 'package:sphere_vendor/web_services/promo_service.dart';
 import '../screens/custom_widget/custom_dialog.dart';
@@ -54,7 +56,6 @@ class AddPromoScreenController extends GetxController{
 
   RxBool addLinkButtonVisible=true.obs;
 
-
   Rx<File> photoImage=File('').obs;
   UserSession userSession = UserSession();
   RxBool productNameErrorVisible = RxBool(false);
@@ -77,10 +78,12 @@ class AddPromoScreenController extends GetxController{
 
   RxString myDate = "".obs;
 
-  RxString status="".obs;
+  RxString status="Active".obs;
   RxBool isStatus=false.obs;
   RxString statusErrorMessage=''.obs;
-  RxBool activeSelected=false.obs,hiddenSelected=false.obs,draftSelected=false.obs;
+  RxBool activeSelected=true.obs,hiddenSelected=false.obs,draftSelected=false.obs;
+  RxString categoryError=''.obs;
+  RxBool isCategory=false.obs;
 
   RxList<File> listOfImages=<File>[].obs;
   RxString additionalImagesErrMsg=''.obs;
@@ -88,14 +91,14 @@ class AddPromoScreenController extends GetxController{
 
   RxString imageErrMsg=''.obs;
   RxBool isImage=false.obs;
-
+  RxList<String> text=<String>[].obs;
   PromoModel pModel=PromoModel.empty();
   RxList<Widget> linkList = <Widget>[].obs;
 
   Completer<GoogleMapController> gController = Completer<GoogleMapController>();
   GoogleMapController? googleMapController;
   final Mode mode = Mode.overlay;
-  String kGoogleApiKey='AIzaSyD8yp_8gVLUooY70FAh8Qvdk7JYANgbOio';
+  String kGoogleApiKey='AIzaSyDa7rKiTOjGg8pyZddXF_CEjZ7mL63RKTA';
   Uint8List? markerImage;
 
   RxList<Marker> markers=<Marker>[].obs;
@@ -107,6 +110,8 @@ class AddPromoScreenController extends GetxController{
 
   Uint8List markerIcon=Uint8List(100);
   RxBool isDiscount=false.obs;
+
+  RxString selection=''.obs;
 
   Future<void> getByteFromAsset(String path, int width) async{
     ByteData byteData=await rootBundle.load(path);
@@ -144,9 +149,10 @@ class AddPromoScreenController extends GetxController{
   }
 
   Future<void> getAddressFromLatLong(Position position)async {
+    ProgressDialog p=ProgressDialog();
     List<Placemark> placeMarks = await placemarkFromCoordinates(position.latitude, position.longitude);
     Placemark place = placeMarks[0];
-    address.value= '${place.locality}';
+    address.value= '${place.name} ${place.subLocality} ${place.locality}';
 
   }
 
@@ -165,6 +171,7 @@ class AddPromoScreenController extends GetxController{
     address.value=detail.result.name;
     latitude=lat;
     longitude=lng;
+    latLng= Position(longitude: longitude, latitude: latitude, timestamp: DateTime.now(), accuracy: 1, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0);
     googleMapController?.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lng), 14.0));
 
   }
@@ -194,12 +201,70 @@ class AddPromoScreenController extends GetxController{
 
   }
 
-  /*void addNewLink(SocialLinkModel socialLinkModel) {
-    if(linkList.length<3) {
-      linkList.add(socialLinkModel);
-    }else{
-    }
-  }*/
+  void chooseDiscountCategory(){
+      showMessageDialogForSelection(
+          type: DialogType.NO_HEADER);
+  }
+
+  void showMessageDialogForSelection(
+      {required DialogType type,
+      }) {
+    AwesomeDialog(
+      dismissOnBackKeyPress: true,
+      context: Get.context!,
+      dialogType: type,
+      headerAnimationLoop: false,
+      animType: AnimType.SCALE,
+      btnOkColor: AppColors.darkPink,
+      titleTextStyle: heading1SemiBold(color: AppColors.primary),
+      dismissOnTouchOutside: true,
+      btnOkOnPress: () {
+        if(selection.value=="Percentage") {
+          isPercentage.value=true;
+          isDiscount.value=true;
+        }else if(selection.value=="Dollar"){
+          isPercentage.value=false;
+          isDiscount.value=true;
+        }else{
+          null;
+        }
+      },
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Text('Select for Discount',style: heading1SemiBold(color: AppColors.primary,fontWeight: FontWeight.w500,fontSize: 20),),
+            Obx(
+                  ()=> RadioListTile(
+                title: const Text("Dollar"),
+                value: "Dollar",
+                groupValue: selection.value,
+                activeColor: AppColors.darkPink,
+                onChanged: (value){
+                  selection.value = value.toString();
+                },
+              ),
+            ),
+            Obx(
+                  ()=>RadioListTile(
+                title: const Text("Percentage"),
+                value: "Percentage",
+                groupValue: selection.value,
+                activeColor: AppColors.darkPink,
+                onChanged: (value){
+                  selection.value = value.toString();
+                },
+              ),
+            ),
+
+          ],
+        ),
+      ),
+    ).show();
+  }
+
+
+
+
 
   void removeFocus(){
     if(productNameFocusNode.hasFocus) {
@@ -231,11 +296,11 @@ class AddPromoScreenController extends GetxController{
       activeSelected.value=true;
       hiddenSelected.value=false;
       draftSelected.value=false;
-    }else if(optionStatus=="Hidden"){
+    }/*else if(optionStatus=="Hidden"){
       activeSelected.value=false;
       hiddenSelected.value=true;
       draftSelected.value=false;
-    }else if(optionStatus=="Draft"){
+    }*/else if(optionStatus=="Draft"){
       activeSelected.value=false;
       hiddenSelected.value=false;
       draftSelected.value=true;
@@ -360,16 +425,16 @@ class AddPromoScreenController extends GetxController{
   }
 
   bool discountValidation(String value) {
-    if (value.trim() == "") {
+    /*if (value.trim() == "") {
       if(discountTEController.text.isEmpty){
         discountErrorMsg.value = "Discount is required!";
         discountErrorVisible.value = true;
       }
-    }else if (int.parse(value)>int.parse(priceTEController.text) && !isPercentage.value) {
+    }else*/ if (value!=''&&int.parse(value)>int.parse(priceTEController.text) && !isPercentage.value) {
         discountErrorMsg.value = "Discount should be less then original price.";
         discountErrorVisible.value = true;
 
-    } else if (int.parse(value)>=100 && isPercentage.value) {
+    } else if (value!=''&&int.parse(value)>=100 && isPercentage.value) {
       discountErrorMsg.value = "Discount should be less 100%";
       discountErrorVisible.value = true;
 
@@ -381,14 +446,12 @@ class AddPromoScreenController extends GetxController{
   }
 
   bool discountStartDateValidation(String value) {
-    if (value.trim() == "") {
       if(discountStartTEController.text.isEmpty){
         discountStartErrorMsg.value = "required!";
         discountStartErrorVisible.value = true;
-      }
     } else if (discountStartTEController.text.length < 10) {
       discountStartErrorVisible.value = true;
-      discountStartErrorMsg.value = "Date should be in yyyy-mm-dd format!";
+      discountStartErrorMsg.value = "Date should be in yyyy-dd-mm format!";
     }
 
 
@@ -400,14 +463,13 @@ class AddPromoScreenController extends GetxController{
   }
 
   bool discountEndDateValidation(String value) {
-    if (value.trim() == "") {
       if(discountEndTEController.text.isEmpty){
         discountEndErrorMsg.value = "required!";
         discountEndErrorVisible.value = true;
       }
-    } else if (discountEndTEController.text.length < 10) {
+    else if (discountEndTEController.text.length < 10) {
       discountEndErrorVisible.value = true;
-      discountEndErrorMsg.value = "Date should be in yyyy-mm-dd format!";
+      discountEndErrorMsg.value = "Date should be in yyyy-dd-mm format!";
     }
 
     else {
@@ -428,7 +490,6 @@ class AddPromoScreenController extends GetxController{
     } else {
       priceErrorVisible.value = false;
       priceErrorMsg.value = "";
-      isDiscount.value=true;
     }
     return priceErrorVisible.value;
   }
@@ -478,6 +539,17 @@ class AddPromoScreenController extends GetxController{
     return isStatus.value;
   }
 
+  bool categoryValidation(CategoryModel categoryModel) {
+      if(categoryModel.id==-1 && categoryModel.name=='Please Select Category'){
+        categoryError.value = "required! Please Select Catgeory";
+        isCategory.value = true;
+      } else {
+      isCategory.value = false;
+      categoryError.value = "";
+    }
+    return isCategory.value;
+  }
+
   bool additionalImagesValidation(List<File> value) {
       if(value.isEmpty){
         additionalImagesErrMsg.value = "Additional photos required!";
@@ -502,6 +574,7 @@ class AddPromoScreenController extends GetxController{
     return isImage.value;
   }
 
+
   bool businessAddValidation(String value) {
     if (value.trim() == "") {
       if(businessAddressTEController.value.text.isEmpty){
@@ -514,7 +587,7 @@ class AddPromoScreenController extends GetxController{
     }
     return businessAddressErrorVisible.value;
   }
-  Rx<CategoryModel> categoryModelDropDownInitialValue =CategoryModel.empty().obs;
+  Rx<CategoryModel> categoryModelDropDownInitialValue =CategoryModel('Please Select Category', -1).obs;
   @override
   void onInit() {
    getCategory();
@@ -523,10 +596,9 @@ class AddPromoScreenController extends GetxController{
   }
 
   Future<void> getCategory() async{
-    dynamic response=await GeneralService().getCategory();
+    items.add(categoryModelDropDownInitialValue.value);
+    dynamic response=await GeneralService().getVendorsCategory();
     if(response is List<CategoryModel>){
-      categoryModelDropDownInitialValue.value = CategoryModel(response.first.name, response.first.id);
-      items.add(categoryModelDropDownInitialValue.value);
       for(CategoryModel item in response){
         items.add(CategoryModel(item.name,item.id));
       }
@@ -566,7 +638,7 @@ class AddPromoScreenController extends GetxController{
           discountStartDateValidation(discountEndTEController.text);
           if(discountStartTEController.value.text!=''){
             DateTime endDate=DateTime(date!.year+1, date.month , date.day);
-           discountEndTEController.text= DateFormat('yyyy-MM-dd').format(endDate);
+           discountEndTEController.text= DateFormat('yyyy-dd-MM').format(endDate);
           }
         } else if(teController == discountEndTEController){
           discountEndDateValidation(discountEndTEController.text);
@@ -579,7 +651,7 @@ class AddPromoScreenController extends GetxController{
   }
   bool checkDateValidity(DateTime? date) {
     if (date != null && !(date.isBlank!)) {
-      myDate.value = DateFormat('yyyy-MM-dd').format(date);
+      myDate.value = DateFormat('yyyy-dd-MM').format(date);
     } else {
     }
     return date!=null;
@@ -592,12 +664,11 @@ class AddPromoScreenController extends GetxController{
     businessAddressTEController.value.text=address.value;
     latitude=latLng!.latitude;
     longitude=latLng!.longitude;
-    getAddressFromLatLong(latLng!);
+   // getAddressFromLatLong(Position(longitude: longitude, latitude: latitude, timestamp: DateTime.now(), accuracy: 0, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0));
   }
 
   Future<void> onDoneButton() async{
     List<String> platform=[];
-    print('===============================>> ${ businessAddressTEController.value.text} ${latitude.toString()} $longitude');
     listOfSocialModel.clear();
     if(linkListTEController.isNotEmpty) {
       for (int i = 0; i < linkListTEController.length; i++) {
@@ -616,32 +687,57 @@ class AddPromoScreenController extends GetxController{
        );
       }
     }
+
     removeFocus();
     bool isAllDataValid = false;
     String discount='';
+    String price='';
     isAllDataValid =  !pNameValidation(productNameTEController.text);
-    isAllDataValid = !priceValidation(priceTEController.text) && isAllDataValid;
-    isAllDataValid = !discountValidation(discountTEController.text) && isAllDataValid;
+    //isAllDataValid = !priceValidation(priceTEController.text) && isAllDataValid;
+    //isAllDataValid = !discountValidation(discountTEController.text) && isAllDataValid;
     isAllDataValid = !businessAddValidation(businessAddressTEController.value.text) && isAllDataValid;
-    isAllDataValid = !discountStartDateValidation(discountStartTEController.text) && isAllDataValid;
-    isAllDataValid = !discountEndDateValidation(discountEndTEController.text) && isAllDataValid;
+   // isAllDataValid = !discountStartDateValidation(discountStartTEController.text) && isAllDataValid;
+   // isAllDataValid = !discountEndDateValidation(discountEndTEController.text) && isAllDataValid;
     isAllDataValid = !descriptionValidation(descriptionTEController.text) && isAllDataValid;
     isAllDataValid = !statusValidation(status.value) && isAllDataValid;
-    isAllDataValid = !additionalImagesValidation(listOfImages) && isAllDataValid;
+    isAllDataValid = !categoryValidation(categoryModelDropDownInitialValue.value) && isAllDataValid;
+    //isAllDataValid = !additionalImagesValidation(listOfImages) && isAllDataValid;
     isAllDataValid = !imageValidation(photoImage.value) && isAllDataValid;
     if(isAllDataValid){
-      if(isPercentage.value){
-        discount=(int.parse(priceTEController.text)-(int.parse(priceTEController.text)*(int.parse(discountTEController.text)/100))).toString();
+      String startDiscount='';
+      String endDiscount='';
+      if(discountStartTEController.text!='' && discountEndTEController.text!=''){
+        DateFormat inputFormat = DateFormat('yyyy-dd-MM');
+        DateTime discountDate = inputFormat.parse(discountStartTEController.text);
+        DateTime discountEndDate=inputFormat.parse(discountEndTEController.text);
+
+        DateFormat outputFormat = DateFormat('yyyy-MM-dd');
+        startDiscount = outputFormat.format(discountDate); // 2019-08-18
+        endDiscount = outputFormat.format(discountEndDate); // 2019-08-18
+
+      }
+
+      if(discountTEController.text!='') {
+        if (isPercentage.value) {
+          discount = (int.parse(priceTEController.text) - (int.parse(priceTEController.text) * (int.parse(discountTEController.text) / 100))).toString();
+        } else {
+          discount = (int.parse(priceTEController.text) - int.parse(discountTEController.text)).toString();
+        }
       }else{
-        discount=(int.parse(priceTEController.text)-int.parse(discountTEController.text)).toString();
+        discount='0';
+      }
+      if(priceTEController.text==''){
+        price='0';
+      }else{
+        price=priceTEController.text;
       }
       ProgressDialog pd = ProgressDialog();
       pModel=PromoModel(
         productNameTEController.text,
-        priceTEController.text,
+        price,
         discount,
-        discountStartTEController.text,
-        discountEndTEController.text,
+       startDiscount,
+        endDiscount,
         descriptionTEController.text,
           businessAddressTEController.value.text,
           latitude.toString(),
@@ -659,6 +755,7 @@ class AddPromoScreenController extends GetxController{
         if (addPromoResponse.responseMessage=='Promo added successfully') {
           pd.dismissDialog();
           Get.offNamed(kInsideHomeRedeemScreen,arguments: addPromoResponse);
+
         } else {
           pd.dismissDialog();
           CustomDialogs().showMessageDialog(title: "Alert",
@@ -673,5 +770,14 @@ class AddPromoScreenController extends GetxController{
       }
 
     }
+  }
+
+
+  @override
+  void dispose() {
+    if(googleMapController!=null) {
+      googleMapController!.dispose();
+    }
+    super.dispose();
   }
 }

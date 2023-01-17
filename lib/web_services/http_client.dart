@@ -77,6 +77,15 @@ class HTTPClient{
         request.fields['last_name'] = userLoginModel.userDetailModel.lastName;
         request.fields['phone'] = userLoginModel.userDetailModel.phone;
         request.fields['description'] = userLoginModel.userDetailModel.description;
+        if(userLoginModel.userDetailModel.listOfCategories.isNotEmpty){
+          for(int i=0;i<userLoginModel.userDetailModel.listOfCategories.length;i++){
+            if(userLoginModel.userDetailModel.listOfCategories[i].id!=-1){
+              request.fields['categories[$i]'] = (userLoginModel.userDetailModel.listOfCategories[i].id).toString();
+            }
+          }
+        }
+
+
         if(imgPath!='') {
 
           request.files.add(await http.MultipartFile.fromPath('profile_image', imgPath));

@@ -127,11 +127,15 @@ class SignupScreen extends GetView<SignUpScreenController>{
             const SizedBox(height: 20),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                socialMediaIconWidget(image: "facebook_icon.png",onPressed: (){}),
-                socialMediaIconWidget(image: "google_icon.png",onPressed: (){}),
-                socialMediaIconWidget(image: "apple_icon.png",onPressed: (){}),
+                socialMediaIconWidget(image: "facebook_icon.png",onPressed: (){
+                  controller.fbLoginTap();
+                }),
+                const SizedBox(width: 17),
+                socialMediaIconWidget(image: "google_icon.png",onPressed: (){
+                  controller.onGoogleSignIn();
+                }),
               ],
             ),
             const SizedBox(height: 50),

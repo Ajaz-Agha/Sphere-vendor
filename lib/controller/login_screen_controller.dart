@@ -1,8 +1,11 @@
+import 'dart:developer';
+
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
-//import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../model/user_login_model.dart';
 import '../screens/custom_widget/custom_dialog.dart';
 import '../screens/custom_widget/custom_proggress_dialog.dart';
@@ -22,12 +25,14 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
   RxString emailErrorMsg = "".obs;
   RxBool passwordErrorVisible = RxBool(false);
   RxString passwordErrorMsg = "".obs;
-  RxBool obscured = true.obs;
+  RxBool obscured = true.obs,isRemember=false.obs;
 
   FocusNode emailFocusNode = FocusNode(),
       passwordFocusNode = FocusNode();
 
   UserSession userSession = UserSession();
+
+  RxMap<String, dynamic> userDataMap=<String,dynamic>{}.obs;
 
   RxString deviceTokenToSendPushNotification=''.obs;
   @override
@@ -39,6 +44,61 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
     getDeviceTokenToSendNotification();
     super.onInit();
   }
+
+  Future<void> fbLoginTap() async {
+    final LoginResult result = await FacebookAuth.instance.login(
+      permissions: ['email', 'public_profile'],
+    ); // by default we request the email and the public profile
+    if (result.status == LoginStatus.success) {
+      final userData = await FacebookAuth.instance.getUserData();
+      userDataMap.value = userData;
+      if(userDataMap['email']!= null) {
+        ProgressDialog pd = ProgressDialog();
+        pd.showDialog();
+        if(await CommonCode().checkInternetAccess()) {
+          UserLoginModel userLoginModel = await UserService().socialLoginUser(
+              email: userDataMap['email'],
+              deviceToken: deviceTokenToSendPushNotification.value,
+              businessName: userDataMap['name']
+          );
+          if (userLoginModel.token.isNotEmpty && userLoginModel.userDetailModel.role=='vendor') {
+            userSession.createSession(userLoginModel: userLoginModel);
+            pd.dismissDialog();
+            if(userLoginModel.userDetailModel.firstName!='' && userLoginModel.userDetailModel.lastName!='' && userLoginModel.userDetailModel.phone!=''){
+              Get.offAllNamed(kVendorHomeScreen);
+            }else {
+              Get.offAllNamed(kVendorProfileScreen);
+            }
+          } else if(userLoginModel.userDetailModel.role=='user'){
+            pd.dismissDialog();
+            CustomDialogs().showMessageDialog(title: "Alert",
+                description: 'Email belongs to User',
+                type: DialogType.ERROR);
+          }else if(userLoginModel.requestErrorMessage=='Please verify your account'){
+            Get.offNamed(kEmailVerificationScreen,arguments: emailTEController.text);
+          }else {
+            pd.dismissDialog();
+            CustomDialogs().showMessageDialog(title: "Alert",
+                description: userLoginModel.requestErrorMessage,
+                type: DialogType.ERROR);
+          }
+        } else{
+          pd.dismissDialog();
+          CustomDialogs().showMessageDialog(title: 'Alert',
+              description: kInternetMsg,
+              type: DialogType.ERROR);
+        }
+      }else{
+        CustomDialogs().showMessageDialog(
+            title: 'Alert',
+            description: 'Facebook email not found',
+            type: DialogType.ERROR);
+      }
+    } else {
+    }
+
+  }
+
 
   Future<void> getDeviceTokenToSendNotification() async {
     final FirebaseMessaging fcm = FirebaseMessaging.instance;
@@ -93,7 +153,11 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
   void onRestPasswordTap(){
     Get.toNamed(kResetPasswordScreen);
   }
-
+  void isRememberMeTap(){
+    if(!emailValidation(emailTEController.text)) {
+      isRemember.value = !isRemember.value;
+    }
+  }
 
 
   //Methods
@@ -128,7 +192,7 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
           }else {
             Get.offAllNamed(kVendorProfileScreen);
           }
-        } else if(userLoginModel.userDetailModel.role=='vendor'){
+        } else if(userLoginModel.userDetailModel.role=='user'){
           pd.dismissDialog();
           CustomDialogs().showMessageDialog(title: "Alert",
               description: 'Email belongs to User',
@@ -151,12 +215,52 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
   }
 
   Future<void> onGoogleSignIn() async{
-    /*GoogleSignIn googleSignIn = GoogleSignIn();
+    GoogleSignIn googleSignIn = GoogleSignIn();
     try {
-      await googleSignIn.signIn();
+     await googleSignIn.signIn();
+     if(googleSignIn.currentUser!.id!=''){
+       emailTEController.text=googleSignIn.currentUser!.email;
+       ProgressDialog pd = ProgressDialog();
+       pd.showDialog();
+       if(await CommonCode().checkInternetAccess()) {
+         UserLoginModel userLoginModel = await UserService().socialLoginUser(
+           email: emailTEController.text,
+           deviceToken: deviceTokenToSendPushNotification.value,
+           businessName: googleSignIn.currentUser!.displayName!
+         );
+         if (userLoginModel.token.isNotEmpty && userLoginModel.userDetailModel.role=='vendor') {
+           userSession.createSession(userLoginModel: userLoginModel);
+           pd.dismissDialog();
+           if(userLoginModel.userDetailModel.firstName!='' && userLoginModel.userDetailModel.lastName!='' && userLoginModel.userDetailModel.phone!=''){
+             Get.offAllNamed(kVendorHomeScreen);
+           }else {
+             Get.offAllNamed(kVendorProfileScreen);
+           }
+         } else if(userLoginModel.userDetailModel.role=='user'){
+           pd.dismissDialog();
+           CustomDialogs().showMessageDialog(title: "Alert",
+               description: 'Email belongs to User',
+               type: DialogType.ERROR);
+         }else if(userLoginModel.requestErrorMessage=='Please verify your account'){
+           Get.offNamed(kEmailVerificationScreen,arguments: emailTEController.text);
+         }else {
+           pd.dismissDialog();
+           CustomDialogs().showMessageDialog(title: "Alert",
+               description: userLoginModel.requestErrorMessage,
+               type: DialogType.ERROR);
+         }
+       } else{
+         pd.dismissDialog();
+         CustomDialogs().showMessageDialog(title: 'Alert',
+             description: kInternetMsg,
+             type: DialogType.ERROR);
+       }
+     }
+
     } catch (error) {
-    }*/
+    }
   }
+
 
 
   @override

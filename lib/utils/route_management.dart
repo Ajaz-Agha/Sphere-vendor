@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:sphere_vendor/screens/auth/change_password_screen.dart';
+import 'package:sphere_vendor/screens/general_screen/general_screen.dart';
 import 'package:sphere_vendor/screens/home/add_promo_screen.dart';
 import 'package:sphere_vendor/screens/home/home_redeem_inside_screen.dart';
 import 'package:sphere_vendor/screens/home/vendor_home_screen.dart';
@@ -59,8 +60,6 @@ class RouteGenerator {
       GetPage(
         name: kVendorHomeScreen,
         page: () => const VendorHomeScreen(),
-        transition: Transition.leftToRight,
-        transitionDuration: pageTransitionDuration,
         binding: ScreenBindings(),
       ),
       GetPage(
@@ -122,6 +121,13 @@ class RouteGenerator {
       GetPage(
         name: kNotificationScreen,
         page: () => const NotificationScreen(),
+        transition: Transition.leftToRight,
+        transitionDuration: pageTransitionDuration,
+        binding: ScreenBindings(),
+      ),
+      GetPage(
+        name: kGeneralScreen,
+        page: () => const GeneralScreen(),
         transition: Transition.leftToRight,
         transitionDuration: pageTransitionDuration,
         binding: ScreenBindings(),

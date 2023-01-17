@@ -16,6 +16,7 @@ const String kChangePasswordScreen  = "/CHANGE_PASSWORD_SCREEN";
 const String kNotificationScreen = "/NOTIFICATION_SCREEN";
 const String kUpdatePasswordScreen = "/UPDATE_PASSWORD_SCREEN";
 const String kEditPromoScreen = "/EDIT_PROMO_SCREEN";
+const String kGeneralScreen = "/GENERAL_SCREEN";
 
 // HTTP Requests MessageSocket
 const String kInternetMsg =

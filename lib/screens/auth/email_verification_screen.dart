@@ -61,8 +61,8 @@ class EmailVerificationScreen extends GetView<EmailVerificationScreenController>
             Text(description,style: heading1(color: AppColors.primary,fontSize: 16),),
             const SizedBox(height: 20,),
             otpCodeWidget(context),
-            const SizedBox(height: 20,),
-            codeReceivedWidget(),
+            /*const SizedBox(height: 20,),
+            codeReceivedWidget(),*/
             const SizedBox(height: 120),
             primaryButton(
                 onPressed: controller.onEmailVerify,

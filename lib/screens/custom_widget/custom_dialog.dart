@@ -7,6 +7,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:sphere_vendor/screens/custom_widget/myWidgets.dart';
 
 import '../../utils/app_colors.dart';
+import '../../utils/app_constants.dart';
+import '../../utils/user_session_management.dart';
+import '../../web_services/user_service.dart';
 class CustomDialogs {
   static final CustomDialogs _instance = CustomDialogs._internal();
 
@@ -292,7 +295,9 @@ class CustomDialogs {
                         ),*/
                         GestureDetector(
                           onTap: () {
-                            exit(0);
+                            UserService().userLogOut();
+                            UserSession().logOut();
+                            Get.offAllNamed(kLoginScreen);
                           },
                           child:  Padding(
                             padding: const EdgeInsets.only(

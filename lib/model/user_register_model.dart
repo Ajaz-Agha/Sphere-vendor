@@ -23,7 +23,7 @@ class UserRegisterModel{
     userPassword= json["password"]??"";
     userConfirmPassword= json["confirm_password"]??"";
     business= json["business_name"]??"";
-    role=json["role"]??"user";
+    role=json["role"]??"vendor";
 
   }
 

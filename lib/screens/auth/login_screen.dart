@@ -112,27 +112,38 @@ class LoginScreen extends GetView<LoginScreenController>{
               padding: const EdgeInsets.only(top: 10,bottom: 20),
               child: Row(
                 children: [
-                  Icon(Icons.check_box_sharp,color: AppColors.lightPink,size: 10,),
-                  const SizedBox(width: 3),
-                  Expanded(child: Text('Remember me',style: heading1(color: AppColors.primary,fontSize: 12),)),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: (){
+                        controller.isRememberMeTap();
+                      },
+                      child: Row(
+                        children: [
+                          Obx(()=> Icon(controller.isRemember.value?Icons.check_box_sharp:Icons.check_box_outline_blank,color: AppColors.lightPink,size: 12)),
+                          const SizedBox(width: 3),
+                          Expanded(child: Text('Remember me',style: heading1(color: AppColors.primary,fontSize: 12),)),
+                        ],),
+                    ),
+                  ),
                   GestureDetector(
                       onTap: (){
                         controller.onRestPasswordTap();
                       },
-                      child: Text('Forget Password?',style: heading1(color: AppColors.primary,fontSize: 12),)),
+                      child: Text('Forgot Password?',style: heading1(color: AppColors.primary,fontSize: 12),)),
                 ],
               ),
             ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 socialMediaIconWidget(image: "facebook_icon.png",onPressed: (){
+                  controller.fbLoginTap();
                 }),
+                const SizedBox(width: 17),
                 socialMediaIconWidget(image: "google_icon.png",onPressed: (){
                   controller.onGoogleSignIn();
                 }),
-                socialMediaIconWidget(image: "apple_icon.png",onPressed: (){}),
               ],
             ),
             const SizedBox(height: 30),
@@ -182,7 +193,7 @@ class LoginScreen extends GetView<LoginScreenController>{
                           Obx(()=>Text(controller.selectedIndex.value!=0?"Create a new":"Welcome",style: bodyMediumMedium(color: AppColors.white,fontSize: 30),)),
                           Obx(()=>Text(controller.selectedIndex.value!=0?"account":"back",style: heading1SemiBold(color: AppColors.white,fontSize: 30),)),
                           const SizedBox(height: 14,),
-                          Expanded(child: Text(  controller.tabController.index!=0?'Lorem ipsum dolor sit amet, conse ctetuer adipis cing elit, asdjhsadj hasd ashdkja shdasjhdaslkdahs':'Lorem ipsum dolor sit amet, conse ctetuer adipis cing elit, asdjhsadj hasd ashdkja shdasjhdaslkdahs',style:heading1(color: AppColors.white,fontSize: 14)))
+                          Expanded(child: Obx(()=>Text(controller.selectedIndex.value!=0?'Please Sign Up to your Account to Continue with Sphere Club':'No risk for NEW business. \nNo special equipment required! Your offers can be redeemed via the APP or visually inspected.',style:heading1SemiBold(color: AppColors.white,fontSize: 14))))
                         ],
                       ),
                     )

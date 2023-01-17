@@ -38,6 +38,8 @@ class VendorProfileScreenController extends GetxController{
   Rx<TextEditingController> businessAddTEController=TextEditingController().obs;
 
   Position? latLng;
+  double longitude=0.0;
+  double latitude=0.0;
 
   RxList<String> linkList = <String>[].obs;
 
@@ -65,7 +67,7 @@ class VendorProfileScreenController extends GetxController{
   UserSession userSession = UserSession();
   GoogleMapController? googleMapController;
   final Mode mode = Mode.overlay;
-  String kGoogleApiKey='AIzaSyD8yp_8gVLUooY70FAh8Qvdk7JYANgbOio';
+  String kGoogleApiKey='AIzaSyDa7rKiTOjGg8pyZddXF_CEjZ7mL63RKTA';
 
  CameraPosition kGooglePlex = const CameraPosition(
     target: LatLng(37.42796133580664, -122.085749655962),
@@ -83,7 +85,7 @@ class VendorProfileScreenController extends GetxController{
   RxString address = ''.obs;
   RxString selection=''.obs;
   RxList<CategoryModel> listOfSelectedIndex=<CategoryModel>[].obs;
-  Rx<CategoryModel> categoryModelDropDownInitialValue =CategoryModel.empty().obs;
+  Rx<CategoryModel> categoryModelDropDownInitialValue =CategoryModel('Please Select Category', -1).obs;
 
  
 
@@ -126,7 +128,7 @@ class VendorProfileScreenController extends GetxController{
   Future<void> displayPrediction(Prediction p) async {
     GoogleMapsPlaces places = GoogleMapsPlaces(
         apiKey: kGoogleApiKey,
-        apiHeaders: await const GoogleApiHeaders().getHeaders()
+        apiHeaders: await const GoogleApiHeaders().getHeaders(),
     );
 
     PlacesDetailsResponse detail = await places.getDetailsByPlaceId(p.placeId!);
@@ -134,9 +136,14 @@ class VendorProfileScreenController extends GetxController{
     final lng = detail.result.geometry!.location.lng;
     markers.clear();
     markers.add(Marker(markerId: const MarkerId("1"),position: LatLng(lat, lng),infoWindow: InfoWindow(title: detail.result.name),icon:BitmapDescriptor.fromBytes((markerIcon)),));
-    address.value=detail.result.name;
-    latLng!.latitude!=lat;
-    latLng!.longitude!=lng;
+    if(detail.result.formattedAddress!='') {
+      address.value = detail.result.formattedAddress!;
+    }
+    latLng!.latitude!=detail.result.geometry!.location.lat;
+    latLng!.longitude!=detail.result.geometry!.location.lng;
+    latitude=detail.result.geometry!.location.lat;
+    longitude=detail.result.geometry!.location.lng;
+    latLng=Position(longitude: longitude, latitude: latitude, timestamp: DateTime.now(), accuracy: 1, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0);
     googleMapController?.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lng), 14.0));
 
   }
@@ -144,13 +151,21 @@ class VendorProfileScreenController extends GetxController{
   Future<void> getAddressFromLatLong(Position position)async {
     List<Placemark> placeMarks = await placemarkFromCoordinates(position.latitude, position.longitude);
     Placemark place = placeMarks[0];
-    address.value= '${place.locality}';
+    address.value= '${place.name} ${place.subLocality} ${place.locality}';
 
   }
   Future<void> getCategory() async{
     dynamic response=await GeneralService().getCategory();
     if(response is List<CategoryModel>){
-      categoryModelDropDownInitialValue.value = CategoryModel(response.first.name, response.first.id);
+      for(int i=0;i<listOfSelectedIndex.length;i++){
+        for(int j=0;j<response.length;j++){
+          if(listOfSelectedIndex[i].id==response[j].id){
+            response.removeAt(j);
+          }
+        }
+
+      }
+      //categoryModelDropDownInitialValue.value = CategoryModel(response.first.name, response.first.id);
       items.add(categoryModelDropDownInitialValue.value);
       for(CategoryModel item in response){
         items.add(CategoryModel(item.name,item.id));
@@ -160,7 +175,7 @@ class VendorProfileScreenController extends GetxController{
   void onChangeDropdownForCategoryTitle(CategoryModel categoryModel) {
     categoryModelDropDownInitialValue.value = categoryModel;
     //items.remove(categoryModelDropDownInitialValue.value);
-    if(!listOfSelectedIndex.contains(categoryModel)) {
+    if(!listOfSelectedIndex.contains(categoryModel) && categoryModelDropDownInitialValue.value.id!=-1) {
       listOfSelectedIndex.add(categoryModel);
     }
   }
@@ -199,7 +214,9 @@ class VendorProfileScreenController extends GetxController{
       customIcon = d;
     });
   }
-  
+
+
+
   Future<void> loadData() async{
     listOfMarkers=[
       Marker(
@@ -222,6 +239,9 @@ class VendorProfileScreenController extends GetxController{
       phNoTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.phone);
     }if(userLoginModelFromSession.value.userDetailModel.description!=''){
       descriptionTEController.value=TextEditingController(text: userLoginModelFromSession.value.userDetailModel.description);
+    }
+    for(int i=0;i<userLoginModelFromSession.value.userDetailModel.listOfCategories.length;i++){
+      listOfSelectedIndex.add(userLoginModelFromSession.value.userDetailModel.listOfCategories[i]);
     }
     for(int i=0;i<userLoginModelFromSession.value.userDetailModel.locationModelList.length;i++){
       if(userLoginModelFromSession.value.userDetailModel.locationModelList[i].address!=''
@@ -275,6 +295,7 @@ Future<void> onUploadImage() async{
   }catch (e){
   }
 }
+
   Future<void> onImagePick(ImageSource source) async {
     ProgressDialog progressDialog = ProgressDialog();
     progressDialog.showDialog();
@@ -489,6 +510,7 @@ Future<void> onUploadImage() async{
       userLoginModel.userDetailModel.lastName=lNameTEController.value.text;
       userLoginModel.userDetailModel.phone=phNoTEController.value.text;
       userLoginModel.userDetailModel.description=descriptionTEController.value.text;
+      userLoginModel.userDetailModel.listOfCategories=listOfSelectedIndex;
       ProgressDialog pd = ProgressDialog();
       pd.showDialog();
       if(await CommonCode().checkInternetAccess()) {
@@ -553,6 +575,7 @@ Future<void> onUploadImage() async{
     phNoTEController.value.dispose();
     descriptionTEController.value.dispose();
     emailTEController.value.dispose();
+
     super.dispose();
   }
 }

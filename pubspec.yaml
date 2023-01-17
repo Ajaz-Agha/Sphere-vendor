@@ -56,7 +56,9 @@ dependencies:
   flutter_google_places: ^0.3.0
   google_maps_webservice: ^0.0.19
   google_api_headers: ^1.5.0
-#  google_sign_in: ^5.4.2
+  google_sign_in: ^5.4.2
+  flutter_facebook_auth: ^5.0.6
+  flutter_launcher_icons: ^0.11.0
 
 dev_dependencies:
   flutter_test:
@@ -69,6 +71,10 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
 
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/appicon.png"
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sphere vendor</string>
+    <string name="facebook_app_id">885101645852669</string>
+    <string name="fb_login_protocol_scheme">fb885101645852669</string>
+    <string name="facebook_client_token">f389999f69908d56fcff494184171960</string>
+</resources>

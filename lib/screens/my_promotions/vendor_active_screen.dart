@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:sphere_vendor/model/promo_model.dart';
 import 'package:sphere_vendor/utils/app_colors.dart';
 import '../../controller/vendor_active_screen_controller.dart';
+import '../../utils/app_constants.dart';
 import '../custom_widget/myWidgets.dart';
 import '../custom_widget/textStyle.dart';
 
@@ -12,10 +13,16 @@ class VendorActiveScreen extends GetView<VendorActiveScreenController>{
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: AppColors.white,
-        key: controller.scaffoldKey,
-        body: _getBody(context)
+    return WillPopScope(
+      onWillPop: (){
+        Get.offNamed(kVendorHomeScreen);
+        return Future.value(false);
+      },
+      child: Scaffold(
+          backgroundColor: AppColors.white,
+          key: controller.scaffoldKey,
+          body: _getBody(context)
+      ),
     );
   }
 
@@ -40,7 +47,7 @@ class VendorActiveScreen extends GetView<VendorActiveScreenController>{
                           children: [
                             GestureDetector(
                                 onTap: (){
-                                  Get.back();
+                                 Get.offNamed(kVendorHomeScreen);
                                 },
                                 child: Icon(Icons.arrow_back,color: AppColors.primary,)),
                             Text('Active',style: heading1SemiBold(color: AppColors.primary,fontSize: 20),),
@@ -49,27 +56,10 @@ class VendorActiveScreen extends GetView<VendorActiveScreenController>{
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 20),
-                          child: Text('Please select for Hide/Draft',style: heading1(color: AppColors.primary,fontSize: 17),),
+                          child: Text('Please select for Draft',style: heading1(color: AppColors.primary,fontSize: 17),),
                         ),
                         Row(
                           children: [
-                            Expanded(
-                              flex: 1,
-                              child: Row(
-                                children: [
-                                  Obx(
-                                  ()=> Radio(
-                                    activeColor: AppColors.darkPink,
-                                        value: 1, groupValue: controller.id.value, onChanged: (index){
-                                      controller.onRadioButtonChange(statusTitle: 'Hide');
-                                }),
-                                  ),
-                                 Expanded(
-                                    child: Text('Hide',style: heading1(color: AppColors.primary,fontSize: 17),),
-                                  )
-                                ],
-                              ),
-                            ),
                             Expanded(
                               flex: 1,
                               child: Row(
@@ -115,47 +105,52 @@ class VendorActiveScreen extends GetView<VendorActiveScreenController>{
   Widget fullCard({required PromoModel promoModel}){
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 10),
-      child: Column(
-        children: [
-          Container(
-            height: 128,
-            width: Get.width,
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                image: DecorationImage(image: NetworkImage(promoModel.promoImageUrl),fit: BoxFit.cover)
+      child: GestureDetector(
+        onTap: () async{
+          await Get.toNamed(kInsideHomeRedeemScreen,arguments: promoModel);
+        },
+        child: Column(
+          children: [
+            Container(
+              height: 128,
+              width: Get.width,
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  image: DecorationImage(image: NetworkImage(promoModel.promoImageUrl),fit: BoxFit.cover)
+              ),
+              padding: const EdgeInsets.only(top: 10,left: 10,right: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _checkBox(false.obs,promoModel),
+                  popUpMenu(promoModel)
+                ],
+              ),
             ),
-            padding: const EdgeInsets.only(top: 10,left: 10,right: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 3,),
+            Column(
               children: [
-                _checkBox(false.obs,promoModel),
-                popUpMenu(promoModel)
-              ],
-            ),
-          ),
-          const SizedBox(height: 3,),
-          Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(child: Text(promoModel.productName,style: bodyMediumMedium(color: AppColors.primary,fontSize: 18,fontWeight: FontWeight.w800))),
-                  const Icon(Icons.remove_red_eye_outlined,size: 16),
-                  Text(' 10',style: heading1SemiBold(color: AppColors.darkPink,fontSize: 10),),
-                ],),
-              Row(
-                children: [
-                  Expanded(child: Text('Sofa, Bed, Chair, Office Furniture')),
-                  const SizedBox(width: 12),
-                  Icon(Icons.star,color: AppColors.iconColor,size: 13,),
-                  const SizedBox(width: 4,),
-                  Text('4.5',style: bodyMediumMedium(color: AppColors.primary,fontSize: 13),),
-                  Text('(5)',style: heading1(color: AppColors.a4Color,fontSize: 10),)
+                Row(
+                  children: [
+                    Expanded(child: Text(promoModel.productName,style: bodyMediumMedium(color: AppColors.primary,fontSize: 18,fontWeight: FontWeight.w800))),
+                   /* const Icon(Icons.remove_red_eye_outlined,size: 16),
+                    Text(' 10',style: heading1SemiBold(color: AppColors.darkPink,fontSize: 10),),*/
+                  ],),
+                Row(
+                  children: [
+                    Expanded(child: Text(promoModel.description)),
+                    /*const SizedBox(width: 12),
+                    Icon(Icons.star,color: AppColors.iconColor,size: 13,),
+                    const SizedBox(width: 4,),
+                    Text('4.5',style: bodyMediumMedium(color: AppColors.primary,fontSize: 13),),
+                    Text('(5)',style: heading1(color: AppColors.a4Color,fontSize: 10),)*/
 
-                ],),
-            ],
-          )
-        ],
+                  ],),
+              ],
+            )
+          ],
+        ),
       ),
     );
   }
@@ -210,7 +205,7 @@ class VendorActiveScreen extends GetView<VendorActiveScreenController>{
         ),
         const PopupMenuItem(
           value: 3,
-          child: Text("Hide",textAlign: TextAlign.center,),
+          child: Text("Delete",textAlign: TextAlign.center,),
         ),
 
       ],
@@ -221,7 +216,7 @@ class VendorActiveScreen extends GetView<VendorActiveScreenController>{
         } else if (value == 2) {
           controller.onPopupSelect(statusTitle: 'Draft',promoModel: promoModel);
         }else if (value==3){
-          controller.onPopupSelect(statusTitle: 'Hide',promoModel: promoModel);
+          controller.deletePromo(promoModel);
         }
       },
     );

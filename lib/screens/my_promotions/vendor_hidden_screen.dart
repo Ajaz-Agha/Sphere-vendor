@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:sphere_vendor/controller/vendor_hidden_screen_cotroller.dart';
 import 'package:sphere_vendor/model/promo_model.dart';
 import 'package:sphere_vendor/utils/app_colors.dart';
+import '../../utils/app_constants.dart';
 import '../custom_widget/myWidgets.dart';
 import '../custom_widget/textStyle.dart';
 
@@ -12,10 +13,16 @@ class VendorHiddenScreen extends GetView<VendorHiddenScreenController>{
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: AppColors.white,
-        key: controller.scaffoldKey,
-        body: _getBody(context)
+    return WillPopScope(
+      onWillPop: (){
+        Get.offNamed(kVendorHomeScreen);
+        return Future.value(false);
+      },
+      child: Scaffold(
+          backgroundColor: AppColors.white,
+          key: controller.scaffoldKey,
+          body: _getBody(context)
+      ),
     );
   }
 
@@ -40,7 +47,7 @@ class VendorHiddenScreen extends GetView<VendorHiddenScreenController>{
                           children: [
                             GestureDetector(
                                 onTap: (){
-                                  Get.back();
+                                  Get.offNamed(kVendorHomeScreen);
                                 },
                                 child: Icon(Icons.arrow_back,color: AppColors.primary,)),
                             Text('Hide',style: heading1SemiBold(color: AppColors.primary,fontSize: 20),),
@@ -115,47 +122,52 @@ class VendorHiddenScreen extends GetView<VendorHiddenScreenController>{
   Widget fullCard({required PromoModel promoModel}){
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 10),
-      child: Column(
-        children: [
-          Container(
-            height: 128,
-            width: Get.width,
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                image: DecorationImage(image: NetworkImage(promoModel.promoImageUrl),fit: BoxFit.cover)
+      child: GestureDetector(
+        onTap: () async{
+          await Get.toNamed(kInsideHomeRedeemScreen,arguments: promoModel);
+        },
+        child: Column(
+          children: [
+            Container(
+              height: 128,
+              width: Get.width,
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  image: DecorationImage(image: NetworkImage(promoModel.promoImageUrl),fit: BoxFit.cover)
+              ),
+              padding: const EdgeInsets.only(top: 10,left: 10,right: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _checkBox(false.obs,promoModel),
+                  popUpMenu(promoModel)
+                ],
+              ),
             ),
-            padding: const EdgeInsets.only(top: 10,left: 10,right: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 3,),
+            Column(
               children: [
-                _checkBox(false.obs,promoModel),
-                popUpMenu(promoModel)
-              ],
-            ),
-          ),
-          const SizedBox(height: 3,),
-          Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(child: Text(promoModel.productName,style: bodyMediumMedium(color: AppColors.primary,fontSize: 18,fontWeight: FontWeight.w800))),
-                  const Icon(Icons.remove_red_eye_outlined,size: 16),
-                  Text(' 10',style: heading1SemiBold(color: AppColors.darkPink,fontSize: 10),),
-                ],),
-              Row(
-                children: [
-                  const Expanded(child: Text('Sofa, Bed, Chair, Office Furniture')),
-                  const SizedBox(width: 12),
-                  Icon(Icons.star,color: AppColors.iconColor,size: 13,),
-                  const SizedBox(width: 4,),
-                  Text('4.5',style: bodyMediumMedium(color: AppColors.primary,fontSize: 13),),
-                  Text('(5)',style: heading1(color: AppColors.a4Color,fontSize: 10),)
+                Row(
+                  children: [
+                    Expanded(child: Text(promoModel.productName,style: bodyMediumMedium(color: AppColors.primary,fontSize: 18,fontWeight: FontWeight.w800))),
+                   /* const Icon(Icons.remove_red_eye_outlined,size: 16),
+                    Text(' 10',style: heading1SemiBold(color: AppColors.darkPink,fontSize: 10),),*/
+                  ],),
+                Row(
+                  children: [
+                    Expanded(child: Text(promoModel.description)),
+                    /*const SizedBox(width: 12),
+                    Icon(Icons.star,color: AppColors.iconColor,size: 13,),
+                    const SizedBox(width: 4,),
+                    Text('4.5',style: bodyMediumMedium(color: AppColors.primary,fontSize: 13),),
+                    Text('(5)',style: heading1(color: AppColors.a4Color,fontSize: 10),)*/
 
-                ],),
-            ],
-          )
-        ],
+                  ],),
+              ],
+            )
+          ],
+        ),
       ),
     );
   }
@@ -212,6 +224,10 @@ class VendorHiddenScreen extends GetView<VendorHiddenScreenController>{
           value: 3,
           child: Text("Save Draft",textAlign: TextAlign.center,),
         ),
+        const PopupMenuItem(
+          value: 4,
+          child: Text("Delete",textAlign: TextAlign.center,),
+        ),
 
       ],
       color: Colors.white,
@@ -222,6 +238,8 @@ class VendorHiddenScreen extends GetView<VendorHiddenScreenController>{
           controller.onPopupSelect(statusTitle: 'Active',promoModel: promoModel);
         }else if (value==3){
           controller.onPopupSelect(statusTitle: 'Draft',promoModel: promoModel);
+        }else if (value==4){
+          controller.deletePromo(promoModel);
         }
       },
     );

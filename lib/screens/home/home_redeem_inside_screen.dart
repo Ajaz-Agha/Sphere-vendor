@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sphere_vendor/utils/app_colors.dart';
 import '../../controller/home_redeem_inside_screen_controller.dart';
+import '../../utils/app_constants.dart';
 import '../custom_widget/myWidgets.dart';
 import '../custom_widget/textStyle.dart';
 
@@ -32,10 +33,10 @@ class HomeScreenDetailRedeemScreen extends GetView<HomeScreenDetailRedeemScreenC
                             Get.back();
                           },
                           child: iconContainer(icon: Icons.arrow_back))),
-                  Positioned(
+                 /* Positioned(
                       top: 20,
                       right: 20,
-                      child: iconContainer(icon: Icons.favorite)),
+                      child: iconContainer(icon: Icons.favorite_border)),*/
                 ],
               ),
             )
@@ -48,23 +49,24 @@ class HomeScreenDetailRedeemScreen extends GetView<HomeScreenDetailRedeemScreenC
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
+                  controller.promoModel.promoImagesModel.isNotEmpty?SizedBox(
                     height: 80,
                     child: ListView.builder(
                         shrinkWrap: true,
                         scrollDirection: Axis.horizontal,
                         itemCount: controller.promoModel.promoImagesModel.length,
                         itemBuilder: (BuildContext context,int index){
-                          return customRowCards(controller.promoModel.promoImagesModel[index].imageUrl);
+                          return customRowCards(controller.promoModel.promoImagesModel[index].imageUrl,context);
                         }
                     ),
-                  ),
+                  ):SizedBox(),
                   const SizedBox(
                     height: 15,
                   ),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(Icons.star,color: AppColors.iconColor,size: 20),
+                      /*Icon(Icons.star,color: AppColors.iconColor,size: 20),
                       const SizedBox(width: 6),
                       Text('4.5',style: bodyMediumMedium(color: AppColors.primary,fontSize: 20),),
                       Text('(300)',style: heading1(color: AppColors.a4Color,fontSize: 14),),
@@ -72,7 +74,8 @@ class HomeScreenDetailRedeemScreen extends GetView<HomeScreenDetailRedeemScreenC
                         padding: EdgeInsets.only(left:21,right: 6),
                         child: Icon(Icons.remove_red_eye_outlined,size: 20),
                       ),
-                      Expanded(child: Text('100',style: heading1SemiBold(color: AppColors.darkPink,fontSize: 14),)),
+                      Expanded(child: Text('100',style: heading1SemiBold(color: AppColors.darkPink,fontSize: 14),)),*/
+                      Expanded(child: Text(controller.promoModel.address,style: heading1(color: AppColors.primary,fontSize: 15),)),
                       GestureDetector(
                           onTap: (){
                             controller.makePhoneCall(controller.promoModel.userDetailModel.phone);
@@ -113,6 +116,10 @@ class HomeScreenDetailRedeemScreen extends GetView<HomeScreenDetailRedeemScreenC
                   primaryButton(color: AppColors.darkPink,buttonText: controller.promoModel.promoCode,textColor: AppColors.white,fontSize: 24,onPressed: (){
                    // customDialog('fur50');
                   }),
+                  const SizedBox(height: 13,),
+                  primaryButton(color: AppColors.primary,buttonText:'Edit',textColor: AppColors.white,fontSize: 24,onPressed: (){
+                    Get.offAllNamed(kEditPromoScreen,arguments: controller.promoModel);
+                  }),
 
                 ],
               ),
@@ -152,17 +159,25 @@ class HomeScreenDetailRedeemScreen extends GetView<HomeScreenDetailRedeemScreenC
     );
   }
 
-  Widget customRowCards(String image) {
+  Widget customRowCards(String image,BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 10),
-      child: ClipRRect(
-          borderRadius: BorderRadius.circular(10.0),
-          child: Image.network(
-            image,
-            height: 103,
-            width: 104,
-            fit: BoxFit.cover,
-          )),
+      child: GestureDetector(
+        onTap: ()async{
+          await showDialog(
+              context: context,
+              builder: (_) => imageDialog(image: image)
+          );
+        },
+        child: ClipRRect(
+            borderRadius: BorderRadius.circular(10.0),
+            child: Image.network(
+              image,
+              height: 103,
+              width: 104,
+              fit: BoxFit.cover,
+            )),
+      ),
     );
   }
 
@@ -224,6 +239,24 @@ class HomeScreenDetailRedeemScreen extends GetView<HomeScreenDetailRedeemScreenC
           Expanded(child: Text(name,style:heading1SemiBold(color: AppColors.primary,fontSize: 14),)),
           Expanded(child: Text(value,style: heading1(color: AppColors.a4Color,fontSize: 14,fontWeight: FontWeight.w400),)),
         ],
+      ),
+    );
+  }
+
+  imageDialog({required String image}){
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Container(
+        width:200,
+        height: 200,
+        decoration: BoxDecoration(
+            image:DecorationImage(
+                image: NetworkImage(image),
+                fit: BoxFit.cover),
+            borderRadius: BorderRadius.circular(10)
+        ),
       ),
     );
   }

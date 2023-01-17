@@ -2,13 +2,14 @@ import 'package:get/get.dart';
 import 'package:sphere_vendor/controller/add_promo_screen_controller.dart';
 import 'package:sphere_vendor/controller/change_password_screen_controller.dart';
 import 'package:sphere_vendor/controller/edit_promo_screen_controller.dart';
+import 'package:sphere_vendor/controller/general_screen_controller.dart';
 import 'package:sphere_vendor/controller/home_redeem_inside_screen_controller.dart';
 import 'package:sphere_vendor/controller/vendor_active_screen_controller.dart';
 import 'package:sphere_vendor/controller/vendor_draft_screen_controller.dart';
 import 'package:sphere_vendor/controller/vendor_hidden_screen_cotroller.dart';
 import 'package:sphere_vendor/controller/vendor_home_screen_controller.dart';
 
-import '../controller/custom_navigation_drawer.dart';
+import '../controller/custom_navigation_drawer_controller.dart';
 import '../controller/email_verification_screen_controller.dart';
 import '../controller/initia_screen_controller.dart';
 import '../controller/login_screen_controller.dart';
@@ -42,5 +43,6 @@ class ScreenBindings extends Bindings{
     Get.lazyPut(() => ChangePasswordScreenController());
     Get.lazyPut(() => UpdatePasswordScreenController());
     Get.lazyPut(() => EditPromoScreenController());
+    Get.lazyPut(() => GeneralScreenController());
   }
 }

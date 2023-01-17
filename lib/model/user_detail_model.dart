@@ -1,5 +1,6 @@
 
 import 'package:get/get.dart';
+import 'package:sphere_vendor/model/category_model.dart';
 import 'package:sphere_vendor/model/location_model.dart';
 
 class UserDetailModel{
@@ -22,7 +23,7 @@ class UserDetailModel{
   int userId=-1;
   RxInt totalFav=0.obs;
   List<LocationModel> locationModelList=[];
-  LocationModel locationModel =LocationModel.empty();
+  List<CategoryModel> listOfCategories=[];
   UserDetailModel.empty();
 
   UserDetailModel.fromJSON(Map<String, dynamic> json){
@@ -45,6 +46,9 @@ class UserDetailModel{
     for(var x in json["locations"]??[]) {
       locationModelList.add(LocationModel.fromJson(x));
     }
+    for(var x in json["categories"]??[]) {
+      listOfCategories.add(CategoryModel.fromJson(x));
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -65,7 +69,8 @@ class UserDetailModel{
       "description": description,
       "business_name":businessName,
       "address":businessAddress,
-      "locations":locationModelList
+      "locations":locationModelList,
+      "categories":listOfCategories
 
     };
   }
@@ -83,6 +88,6 @@ class UserDetailModel{
 
   @override
   String toString() {
-    return 'UserDetailModel{uAccEmail: $uAccEmail, requestErrorMessage: $requestErrorMessage, firstName: $firstName, lastName: $lastName, profileImage: $profileImage, profileImageUrl: $profileImageUrl, coverImageUrl: $coverImageUrl, coverImage: $coverImage, phone: $phone, longitude: $longitude, latitude: $latitude, role: $role, createdAt: $createdAt, businessName: $businessName, businessAddress: $businessAddress, description: $description, userId: $userId, totalFav: $totalFav, locationModelList: $locationModelList}';
+    return 'UserDetailModel{uAccEmail: $uAccEmail, requestErrorMessage: $requestErrorMessage, firstName: $firstName, lastName: $lastName, profileImage: $profileImage, profileImageUrl: $profileImageUrl, coverImageUrl: $coverImageUrl, coverImage: $coverImage, phone: $phone, longitude: $longitude, latitude: $latitude, role: $role, createdAt: $createdAt, businessName: $businessName, businessAddress: $businessAddress, description: $description, userId: $userId, totalFav: $totalFav, locationModelList: $locationModelList, listOfCategories: $listOfCategories}';
   }
 }

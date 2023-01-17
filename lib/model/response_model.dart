@@ -7,10 +7,8 @@ class ResponseModel {
   ResponseModel.named({required this.statusCode, required this.statusDescription, this.data});
 
   ResponseModel.fromJson(Map<String, dynamic> json) {
-    print(json["success"]);
     statusCode =(json["success"] != null && !json["success"])?1:0;
     statusDescription =  json["message"]??"";
-    print(statusDescription);
     if(statusDescription == "The given data was invalid."){
       Map<String,dynamic> error = json["errors"];
       error.forEach((key, value) {

@@ -1,11 +1,16 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import '../model/user_login_model.dart';
 import '../model/user_register_model.dart';
 import '../screens/custom_widget/custom_dialog.dart';
 import '../screens/custom_widget/custom_proggress_dialog.dart';
 import '../utils/app_constants.dart';
 import '../utils/common_code.dart';
+import '../utils/user_session_management.dart';
 import '../web_services/user_service.dart';
 
 class SignUpScreenController extends GetxController{
@@ -32,7 +37,13 @@ class SignUpScreenController extends GetxController{
   RxString businessTFErrorMsg = "".obs;
 
   UserRegisterModel _userRegisterModel = UserRegisterModel.empty();
-  UserService _userService = UserService();
+  UserService userService = UserService();
+
+  RxMap<String, dynamic> userDataMap=<String,dynamic>{}.obs;
+
+  RxString deviceTokenToSendPushNotification=''.obs;
+
+  UserSession userSession = UserSession();
 
   bool isValidEmail(String email) {
     return RegExp(
@@ -43,6 +54,18 @@ class SignUpScreenController extends GetxController{
   Future<bool> onWillPop() {
     Get.back();
     return Future.value(false);
+  }
+
+  @override
+  void onInit() {
+    getDeviceTokenToSendNotification();
+    super.onInit();
+  }
+
+  Future<void> getDeviceTokenToSendNotification() async {
+    final FirebaseMessaging fcm = FirebaseMessaging.instance;
+    final token = await fcm.getToken();
+    deviceTokenToSendPushNotification.value = token.toString();
   }
 
   void removeAFieldsFocus() {
@@ -136,6 +159,108 @@ class SignUpScreenController extends GetxController{
     passwordFocusNode.canRequestFocus = false;
   }
 
+
+  Future<void> fbLoginTap() async {
+    final LoginResult result = await FacebookAuth.instance.login(
+      permissions: ['email', 'public_profile'],
+    ); // by default we request the email and the public profile
+    if (result.status == LoginStatus.success) {
+      final userData = await FacebookAuth.instance.getUserData();
+      userDataMap.value = userData;
+      if(userDataMap['email']!= null) {
+        ProgressDialog pd = ProgressDialog();
+        pd.showDialog();
+        if(await CommonCode().checkInternetAccess()) {
+          UserLoginModel userLoginModel = await UserService().socialLoginUser(
+              email: userDataMap['email'],
+              deviceToken: deviceTokenToSendPushNotification.value,
+              businessName: userDataMap['name']
+          );
+          if (userLoginModel.token.isNotEmpty && userLoginModel.userDetailModel.role=='vendor') {
+            userSession.createSession(userLoginModel: userLoginModel);
+            pd.dismissDialog();
+            if(userLoginModel.userDetailModel.firstName!='' && userLoginModel.userDetailModel.lastName!='' && userLoginModel.userDetailModel.phone!=''){
+              Get.offAllNamed(kVendorHomeScreen);
+            }else {
+              Get.offAllNamed(kVendorProfileScreen);
+            }
+          } else if(userLoginModel.userDetailModel.role=='user'){
+            pd.dismissDialog();
+            CustomDialogs().showMessageDialog(title: "Alert",
+                description: 'Email belongs to User',
+                type: DialogType.ERROR);
+          }else if(userLoginModel.requestErrorMessage=='Please verify your account'){
+            Get.offNamed(kEmailVerificationScreen,arguments: emailController.text);
+          }else {
+            pd.dismissDialog();
+            CustomDialogs().showMessageDialog(title: "Alert",
+                description: userLoginModel.requestErrorMessage,
+                type: DialogType.ERROR);
+          }
+        } else{
+          pd.dismissDialog();
+          CustomDialogs().showMessageDialog(title: 'Alert',
+              description: kInternetMsg,
+              type: DialogType.ERROR);
+        }
+      }else{
+        CustomDialogs().showMessageDialog(
+            title: 'Alert',
+            description: 'Facebook email not found',
+            type: DialogType.ERROR);
+      }
+    } else {
+    }
+
+  }
+
+  Future<void> onGoogleSignIn() async{
+    GoogleSignIn googleSignIn = GoogleSignIn();
+    try {
+      await googleSignIn.signIn();
+      if(googleSignIn.currentUser!.id!=''){
+        emailController.text=googleSignIn.currentUser!.email;
+        ProgressDialog pd = ProgressDialog();
+        pd.showDialog();
+        if(await CommonCode().checkInternetAccess()) {
+          UserLoginModel userLoginModel = await UserService().socialLoginUser(
+              email: emailController.text,
+              deviceToken: deviceTokenToSendPushNotification.value,
+              businessName: googleSignIn.currentUser!.displayName!
+          );
+          if (userLoginModel.token.isNotEmpty && userLoginModel.userDetailModel.role=='vendor') {
+            userSession.createSession(userLoginModel: userLoginModel);
+            pd.dismissDialog();
+            if(userLoginModel.userDetailModel.firstName!='' && userLoginModel.userDetailModel.lastName!='' && userLoginModel.userDetailModel.phone!=''){
+              Get.offAllNamed(kVendorHomeScreen);
+            }else {
+              Get.offAllNamed(kVendorProfileScreen);
+            }
+          } else if(userLoginModel.userDetailModel.role=='user'){
+            pd.dismissDialog();
+            CustomDialogs().showMessageDialog(title: "Alert",
+                description: 'Email belongs to User',
+                type: DialogType.ERROR);
+          }else if(userLoginModel.requestErrorMessage=='Please verify your account'){
+            Get.offNamed(kEmailVerificationScreen,arguments: emailController.text);
+          }else {
+            pd.dismissDialog();
+            CustomDialogs().showMessageDialog(title: "Alert",
+                description: userLoginModel.requestErrorMessage,
+                type: DialogType.ERROR);
+          }
+        } else{
+          pd.dismissDialog();
+          CustomDialogs().showMessageDialog(title: 'Alert',
+              description: kInternetMsg,
+              type: DialogType.ERROR);
+        }
+      }
+
+    } catch (error) {
+    }
+  }
+
   bool validateBothPassword(){
     return confirmPasswordController.text == passwordController.text &&
         passwordController.text.length >= 8 &&
@@ -158,7 +283,7 @@ class SignUpScreenController extends GetxController{
           userPassword: passwordController.text.trim(),
           business: businessController.text.trim(),
         );
-        UserRegisterModel userRegisterModel = await _userService.registerUser(_userRegisterModel);
+        UserRegisterModel userRegisterModel = await userService.registerUser(_userRegisterModel);
         if (userRegisterModel.response=="User has been created successfully") {
           pd.dismissDialog();
 

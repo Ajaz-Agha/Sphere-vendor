@@ -1,4 +1,6 @@
 
+import 'dart:developer';
+
 import 'package:sphere_vendor/model/promo_model.dart';
 import 'package:sphere_vendor/web_services/web_url.dart';
 import '../model/response_model.dart';
@@ -105,6 +107,16 @@ class PromoService{
     if(responseModel.statusDescription=="status changed"){
       return responseModel.statusDescription;
     }
+    return responseModel.statusDescription;
+  }
+
+
+  Future<String> deletePromo({required int promoId})async{
+    Map<String,String> requestBody = {
+      "id":promoId.toString(),
+    };
+    ResponseModel responseModel = await _httpClient.postRequest(url: kDeletePromoUrl,
+        requestBody: requestBody,needHeaders: true);
     return responseModel.statusDescription;
   }
 

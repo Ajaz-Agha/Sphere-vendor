@@ -51,5 +51,24 @@ class GeneralService{
     return notifications;
   }
 
+  Future<dynamic> getVendorsCategory()async{
+    List<CategoryModel> category = <CategoryModel>[];
+    ResponseModel responseModel = await _httpClient.getRequest(
+        url: kGetVendorCategoryURL);
+    if (responseModel.statusDescription.isNotEmpty &&
+        responseModel.statusDescription == "Categories found" &&
+        responseModel.data != null
+        && responseModel.data.length > 0) {
+      List categoryList = responseModel.data;
+      for (int i = 0; i < categoryList.length; i++) {
+        category.add(CategoryModel.fromJson(categoryList[i]));
+      }
+
+    }else{
+      return responseModel.statusDescription;
+    }
+    return category;
+  }
+
 
 }

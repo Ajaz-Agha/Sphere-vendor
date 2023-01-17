@@ -1,7 +1,6 @@
 class CategoryModel{
   String name='';
   int id=-1;
-  String createdAt='';
   String responseMessage='';
 
   CategoryModel.empty();
@@ -11,12 +10,18 @@ class CategoryModel{
   CategoryModel.fromJson(Map<String,dynamic> json){
     name= json["name"]??"";
     id= json["id"]??-1;
-    createdAt= json["created_at"]??"";
 
+  }
+  Map<String, dynamic> toJson() {
+    return {
+      'id':id,
+      'name':name,
+
+    };
   }
 
   @override
   String toString() {
-    return 'CategoryModel{name: $name, id: $id, createdAt: $createdAt, responseMessage: $responseMessage}';
+    return 'CategoryModel{name: $name, id: $id, responseMessage: $responseMessage}';
   }
 }

@@ -12,6 +12,7 @@ class UserSession{
   }
   static const String USER_DATA = "USERDATA";
   static const String IS_LOGIN = "IS_LOGIN";
+  static const String IS_REMEBER="IS_REMEMBER";
 
 
   Future<void> createSession({required UserLoginModel userLoginModel}) async {
@@ -33,6 +34,14 @@ class UserSession{
   Future<bool> isUserLoggedIn()async{
     final preference = await SharedPreferences.getInstance();
     return preference.getBool(IS_LOGIN)??false;
+  }
+  Future<void> isRememberMe(String email) async {
+    SharedPreferences preference = await SharedPreferences.getInstance();
+    preference.setString(IS_REMEBER,email);
+  }
+  Future<String> getEmail() async {
+    SharedPreferences preference = await SharedPreferences.getInstance();
+    return preference.getString(IS_REMEBER)??'';
   }
 
   Future<void> logOut()async{

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
@@ -7,6 +8,7 @@ import 'package:sphere_vendor/utils/app_constants.dart';
 import '../../controller/vendor_profile_screen_controller.dart';
 import '../../model/category_model.dart';
 import '../../utils/app_colors.dart';
+import '../custom_widget/custom_proggress_dialog.dart';
 import '../custom_widget/myWidgets.dart';
 import '../custom_widget/textStyle.dart';
 
@@ -50,7 +52,6 @@ Widget _getBody(BuildContext context){
                           },
                           child: iconWidget(icon: Icons.arrow_back)
                         ),
-                        Text('Profile',style: heading1SemiBold(fontSize: 20,color: AppColors.primary),),
                         GestureDetector(
                           onTap: (){
                             controller.onUploadCoverImage();
@@ -168,10 +169,15 @@ Widget _getBody(BuildContext context){
                   ),
                   GestureDetector(
                       onTap: () async{
+                        ProgressDialog p=ProgressDialog();
+                        p.showDialog(title: 'Please wait..');
                         await controller.getCurrentPosition();
                         controller.loadData();
                         controller.markers.addAll(controller.listOfMarkers);
-                        showBottomSheet(context);
+                        if(controller.markers.isNotEmpty){
+                          p.dismissDialog();
+                          showBottomSheet(context);
+                        }
                       },
 
                       child: Obx(()=>formWidget(title: 'Business Address*',hint: 'address',textEditingController: controller.businessAddTEController.value))),
@@ -181,7 +187,7 @@ Widget _getBody(BuildContext context){
                   ),
                       dropDown(),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Obx(
                         ()=> SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
@@ -328,108 +334,119 @@ Widget formWidget(
   Future<dynamic> showBottomSheet(BuildContext context){
     return showModalBottomSheet(
         isScrollControlled: true,
+        isDismissible: false,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(25.0),
           ),
         ),
         builder: (context) {
-          return Wrap(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 10),
-                  child: Row(
+          return WillPopScope(
+            onWillPop: () async {
+              await Future.delayed(const Duration(milliseconds: 500));
+              Get.back();
+              return Future.value(false);
+            },
+            child: Wrap(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 10),
+                    child: Row(
+                      children: [
+                        imageIcon(img: 'trending_icon.png',size: 20),
+                        const SizedBox(width: 4),
+                        Expanded(child: Text('User My Location',style:heading1(fontSize: 18))),
+                        GestureDetector(
+                            onTap: () async{
+                              await Future.delayed(const Duration(milliseconds: 500));
+                              Get.back();
+                            },
+                            child: Icon(Icons.close,color: AppColors.darkPink,size: 20,))
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      imageIcon(img: 'trending_icon.png',size: 20),
-                      const SizedBox(width: 4),
-                      Expanded(child: Text('User My Location',style:heading1(fontSize: 18))),
-                      GestureDetector(
-                          onTap: (){
-                            Get.back();
-                          },
-                          child: Icon(Icons.close,color: AppColors.darkPink,size: 20,))
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: primaryButton(
+                            color: AppColors.primary,
+                            height: 37,
+                            onPressed: () async{
+                              Prediction? p = await PlacesAutocomplete.show(
+                                  context: context,
+                                  apiKey: controller.kGoogleApiKey,
+                                  mode: controller.mode,
+                                  language: 'en',
+                                  strictbounds: false,
+                                  types: [""],
+                                  decoration: InputDecoration(
+                                      hintText: 'Search',
+                                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: Colors.white))),
+                                  components: [Component(Component.country,"pk"),Component(Component.country,"ca")]);
+                              if(p!=null) {
+                                controller.displayPrediction(p);
+                              }
+                            }, buttonText: 'Search Place',textColor: AppColors.white),
+                      ),
+                      Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
+                          child: Container(
+                            height: 250,
+                            child:  Obx(()=>GoogleMap(
+                              zoomGesturesEnabled: true, //enable Zoom in, out on map
+                              onMapCreated: (GoogleMapController googleMapController){
+                                controller.googleMapController=googleMapController;
+                                if(controller.gController.isCompleted){}else {
+                                  controller.gController
+                                      .complete(googleMapController);
+                                }
+                              },
+                              mapType: MapType.normal,
+                              markers: Set<Marker>.of(controller.markers),
+                              initialCameraPosition: CameraPosition(
+                                target: LatLng(controller.latLng!.latitude, controller.latLng!.longitude),
+                                zoom: 14.4746,
+                              ),
+                              onTap: (LatLng latLng){
+                                controller.listOfMarkers.clear();
+                                controller.markers.clear();
+                                Marker newMarker=Marker(
+                                  icon:BitmapDescriptor.fromBytes((controller.markerIcon)),
+                                  markerId: const MarkerId('1'),
+                                  position: LatLng(latLng.latitude, latLng.longitude),
+                                  infoWindow:InfoWindow(title: controller.address.value),
+                                );
+                                controller.latLng=Position(longitude: latLng.longitude, latitude: latLng.latitude, timestamp: DateTime.now(), accuracy: 1, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0);
+                                controller.markers.add(newMarker);
+                              },
+                            ),
+                            ),
+
+                            /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/)
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Row(
+                          children: [
+                            Expanded(child: primaryButton(buttonText: 'Cancel',color: AppColors.primary,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: () async{
+                             await Future.delayed(const Duration(milliseconds: 500));
+                              Get.back();
+                            })),
+                            Expanded(child: primaryButton(buttonText: 'Done',color: AppColors.darkPink,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
+                             Get.back();
+                              controller.businessAddTEController.value.text=controller.address.value;
+                              controller.onLocationUpdate();
+                            })),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: primaryButton(
-                          color: AppColors.primary,
-                          height: 37,
-                          onPressed: () async{
-                            Prediction? p = await PlacesAutocomplete.show(
-                                context: context,
-                                apiKey: controller.kGoogleApiKey,
-                                mode: controller.mode,
-                                language: 'en',
-                                strictbounds: false,
-                                types: [""],
-                                decoration: InputDecoration(
-                                    hintText: 'Search',
-                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Colors.white))),
-                                components: [Component(Component.country,"pk"),Component(Component.country,"usa")]);
-                            controller.displayPrediction(p!);
-                          }, buttonText: 'Search Place',textColor: AppColors.white),
-                    ),
-                    Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
-                        child: Container(
-                          height: 250,
-                          child:  Obx(()=>GoogleMap(
-                            zoomGesturesEnabled: true, //enable Zoom in, out on map
-                            onMapCreated: (GoogleMapController googleMapController){
-                              controller.googleMapController=googleMapController;
-                              if(controller.gController.isCompleted){}else {
-                                controller.gController
-                                    .complete(googleMapController);
-                              }
-                            },
-                            mapType: MapType.normal,
-                            markers: Set<Marker>.of(controller.markers),
-                            initialCameraPosition: CameraPosition(
-                              target: LatLng(controller.latLng!.latitude, controller.latLng!.longitude),
-                              zoom: 14.4746,
-                            ),
-                            onTap: (LatLng latLng){
-                              controller.listOfMarkers.clear();
-                              controller.markers.clear();
-                              Marker newMarker=Marker(
-                                icon:BitmapDescriptor.fromBytes((controller.markerIcon)),
-                                markerId: const MarkerId('1'),
-                                position: LatLng(latLng.latitude, latLng.longitude),
-                                infoWindow:InfoWindow(title: controller.address.value),
-                              );
-                              controller.latLng!.latitude!=latLng.latitude;
-                              controller.latLng!.longitude!=latLng.longitude;
-                              controller.markers.add(newMarker);
-                            },
-                          ),
-                          ),
 
-                          /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/)
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Row(
-                        children: [
-                          Expanded(child: primaryButton(buttonText: 'Cancel',color: AppColors.primary,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
-                            Get.back();
-                          })),
-                          Expanded(child: primaryButton(buttonText: 'Done',color: AppColors.darkPink,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
-                           Get.back();
-                            controller.businessAddTEController.value.text=controller.address.value;
-                            controller.onLocationUpdate();
-                          })),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-              ]
+                ]
+            ),
           );
         }, context: context);
   }
@@ -487,6 +504,9 @@ Widget formWidget(
             GestureDetector(
                 onTap: (){
                   controller.listOfSelectedIndex.remove(categoryModel);
+                 if(!controller.items.contains(categoryModel)){
+                   controller.items.add(categoryModel);
+                 }
                 },
                 child: Icon(Icons.close,color: AppColors.darkPink,size: 17,))
           ],
@@ -494,4 +514,5 @@ Widget formWidget(
       ),
     );
   }
+
 }

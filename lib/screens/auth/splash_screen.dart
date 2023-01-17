@@ -50,7 +50,7 @@ class SplashScreen extends GetView<SplashScreenController>{
               Text('Sphere Club',style: heading1SemiBold(color: AppColors.primary),),
               const SizedBox(height: 14,),
               Text(
-                'Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.',style: heading1(fontSize: 16,color: AppColors.primary),
+                'The Sphere Club provides your business with a great way to generate extra traffic and encourage new customers to remain loyal to you. This effective marketing tool will help spread the word about your company or brand.',style: heading1(fontSize: 16,color: AppColors.primary),
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 57,bottom: 18),

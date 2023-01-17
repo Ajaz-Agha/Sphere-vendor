@@ -6,6 +6,7 @@ import 'package:sphere_vendor/screens/custom_widget/custom_navigation_drawer.dar
 import 'package:sphere_vendor/utils/app_constants.dart';
 import '../../model/category_model.dart';
 import '../../utils/app_colors.dart';
+import '../custom_widget/custom_dialog.dart';
 import '../custom_widget/myWidgets.dart';
 import '../custom_widget/textStyle.dart';
 
@@ -16,6 +17,7 @@ class VendorHomeScreen extends GetView<VendorHomeScreenController>{
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: (){
+        CustomDialogs().appCloseConfirmationDialog();
         return Future.value(false);
       },
       child: Scaffold(
@@ -39,38 +41,47 @@ class VendorHomeScreen extends GetView<VendorHomeScreenController>{
               child: Stack(
                   children: [
                     Obx(
-                          ()=> Container(
-                        height: 180,
-                        decoration: BoxDecoration(
-                            image: DecorationImage(image: controller.userFromService.value.coverImageUrl!=''?NetworkImage(controller.userFromService.value.coverImageUrl):controller.userLoginModel.value.userDetailModel.coverImageUrl!=''?NetworkImage(controller.userLoginModel.value.userDetailModel.coverImageUrl):AssetImage(Img.get('sphere_logo.png')) as ImageProvider,fit:
-                            controller.userFromService.value.coverImageUrl==''&&controller.userLoginModel.value.userDetailModel.coverImageUrl==''
-                            ?BoxFit.contain:BoxFit.cover,
-                            ),
-                            borderRadius: const BorderRadius.only(bottomRight: Radius.circular(20),bottomLeft: Radius.circular(20))
-                        ),
-                        padding: const EdgeInsets.all(20),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            GestureDetector(
-                              onTap: (){
-                                controller.scaffoldKey.currentState!.openDrawer();
-                                FocusScope.of(context).requestFocus(FocusNode());
-                              },
-                              child: Image.asset("assets/images/menu_icon.png",width: 20,height: 20,),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(vertical: 5,horizontal: 5),
-                                decoration: BoxDecoration(
-                                  color: AppColors.textFieldBackground,
-                                  borderRadius: BorderRadius.circular(7)
+                          ()=>Container(
+                          height: 180,
+                          decoration: const BoxDecoration(
+                              borderRadius: BorderRadius.only(bottomRight: Radius.circular(20),bottomLeft: Radius.circular(20))
+                          ),
+                          child: Stack(
+                            children: [
+                              controller.userFromService.value.coverImageUrl!=''?Image.network(controller.userFromService.value.coverImageUrl,fit: BoxFit.cover,height: 180,width: Get.width,):
+                              controller.userLoginModel.value.userDetailModel.coverImageUrl!=''?Image.network(controller.userLoginModel.value.userDetailModel.coverImageUrl,fit: BoxFit.cover,height: 180,width: Get.width,):Center(child: Image.asset(Img.get('sphere_logo.png'),height: 30,)),
+                              Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: (){
+                                        controller.scaffoldKey.currentState!.openDrawer();
+                                        FocusScope.of(context).requestFocus(FocusNode());
+                                      },
+                                      child: Image.asset("assets/images/menu_icon.png",width: 20,height: 20,),
+                                    ),
+                                    GestureDetector(
+                                      onTap: (){
+                                        Get.offNamed(kVendorProfileScreen);
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 5,horizontal: 5),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.textFieldBackground,
+                                            borderRadius: BorderRadius.circular(7)
+                                          ),
+                                          child: Text('My Business Profile',style: heading1SemiBold(fontSize: 20,color: AppColors.primary),)),
+                                    ),
+                                    const SizedBox()
+                                  ],
                                 ),
-                                child: Text('My Business Profile',style: heading1SemiBold(fontSize: 20,color: AppColors.primary),)),
-                            const SizedBox()
-                          ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -99,7 +110,7 @@ class VendorHomeScreen extends GetView<VendorHomeScreenController>{
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.only(left: 20),
                       child: Row(
                         children: [
                           Expanded(
@@ -202,8 +213,9 @@ class VendorHomeScreen extends GetView<VendorHomeScreenController>{
       child: Column(
         children: [
           GestureDetector(
-            onTap: (){
-              Get.toNamed(kInsideHomeRedeemScreen,arguments: promoModel);
+            onTap: () async{
+            await Get.toNamed(kInsideHomeRedeemScreen,arguments: promoModel);
+
             },
             child: Container(
               height: 128,
@@ -212,15 +224,11 @@ class VendorHomeScreen extends GetView<VendorHomeScreenController>{
                   borderRadius: BorderRadius.circular(20),
                   image: DecorationImage(image: NetworkImage(promoModel.promoImageUrl),fit: BoxFit.cover)
               ),
-              padding: const EdgeInsets.only(top: 10,right: 10),
+              padding: const EdgeInsets.only(top: 10,right: 10,left: 10),
               child: Align(
-                  alignment: Alignment.topRight,
-                  child: Column(
-                    children: [
-                      Icon(Icons.favorite,color: AppColors.white),
-                      Text('0',style: heading1(color: AppColors.a4Color,fontSize: 10),)
-                    ],
-                  )),
+                alignment: Alignment.topRight,
+                child:popUpMenu(promoModel),
+              ),
             ),
           ),
           const SizedBox(height: 3,),
@@ -229,17 +237,20 @@ class VendorHomeScreen extends GetView<VendorHomeScreenController>{
               Row(
                 children: [
                   Expanded(child: Text(promoModel.productName,style: heading1SemiBold(color: AppColors.primary,fontSize: 15))),
-                  const Icon(Icons.remove_red_eye_outlined,size: 16),
-                  Text(' 100',style: heading1SemiBold(color: AppColors.darkPink,fontSize: 10),),
+                  const SizedBox(width: 12),
+                  Text('Promo Code: ',style: bodyMediumMedium(color: AppColors.primary,fontSize: 13),),
+                  Text(promoModel.promoCode,style: bodyMediumMedium(color: AppColors.darkPink,fontSize: 13),),
+                  /*const Icon(Icons.remove_red_eye_outlined,size: 16),
+                  Text(' 100',style: heading1SemiBold(color: AppColors.darkPink,fontSize: 10),),*/
                 ],),
               Row(
                 children: [
                   Expanded(child: Text(promoModel.userDetailModel.businessName)),
-                  const SizedBox(width: 12),
+                 /*
                   Icon(Icons.star,color: AppColors.iconColor,size: 13,),
                   const SizedBox(width: 4,),
-                  Text('4.5',style: bodyMediumMedium(color: AppColors.primary,fontSize: 13),),
-                  Text('(10)',style: heading1(color: AppColors.a4Color,fontSize: 10),)
+
+                  Text('(10)',style: heading1(color: AppColors.a4Color,fontSize: 10),)*/
 
                 ],),
             ],
@@ -293,6 +304,7 @@ class VendorHomeScreen extends GetView<VendorHomeScreenController>{
             borderRadius: BorderRadius.circular(8),
             value: controller.categoryModelDropDownInitialValue.value,
             elevation: 0,
+            hint: const Text('Select Category'),
             style: const TextStyle(color: Colors.white),
             iconEnabledColor:Colors.black,
             items: controller.items.map<DropdownMenuItem<CategoryModel>>((value)  {
@@ -311,6 +323,49 @@ class VendorHomeScreen extends GetView<VendorHomeScreenController>{
     );
   }
 
+  Widget popUpMenu(PromoModel promoModel){
+    return PopupMenuButton<int>(
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 1,
+          child: Text("Edit",textAlign: TextAlign.center,),
+        ),
+        const PopupMenuItem(
+          value: 2,
+          child: Text("Save Draft",textAlign: TextAlign.center,),
+        ),
+       /* const PopupMenuItem(
+          value: 3,
+          child: Text("Hide",textAlign: TextAlign.center,),
+        ),*/
+        const PopupMenuItem(
+          value: 3,
+          child: Text("Delete",textAlign: TextAlign.center,),
+        ),
 
+      ],
+      color: Colors.white,
+      onSelected: (value) {
+        if (value == 1) {
+          customDialog(promoModel);
+        } else if (value == 2) {
+          controller.onPopupSelect(statusTitle: 'Draft',promoModel: promoModel);
+        }/*else if (value==3){
+          controller.onPopupSelect(statusTitle: 'Hide',promoModel: promoModel);
+        }*/else if (value==3){
+          controller.deletePromo(promoModel);
+        }
+      },
+      child: Container(
+        height: 25,
+        width: 25,
+        decoration: BoxDecoration(
+            color: AppColors.filterContainer,
+            borderRadius: BorderRadius.circular(3)
+        ),
+        child: const Icon(Icons.more_vert,size: 20,),
+      ),
+    );
+  }
 
 }

@@ -1,11 +1,17 @@
+import 'dart:math';
+
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:sphere_vendor/controller/add_promo_screen_controller.dart';
 import 'package:sphere_vendor/model/category_model.dart';
+import 'package:sphere_vendor/screens/custom_widget/custom_dialog.dart';
 import 'package:sphere_vendor/screens/custom_widget/custom_navigation_drawer.dart';
+import 'package:sphere_vendor/screens/custom_widget/custom_proggress_dialog.dart';
 import 'package:sphere_vendor/utils/app_colors.dart';
 import '../custom_widget/myWidgets.dart';
 import '../custom_widget/textStyle.dart';
@@ -32,12 +38,25 @@ class AddPromoScreen extends GetView<AddPromoScreenController>{
              child: Image.asset("assets/images/menu_icon.png",width: 20,height: 20,),
            ),
            Text('Add Promo',style: heading1SemiBold(fontSize: 20,color: AppColors.primary),),
-          imageIcon(img: 'delete_icon.png',size: 22)
+         SizedBox()
+         // imageIcon(img: 'delete_icon.png',size: 22)
 
          ],
        ),
      ),
-       body: _getBody(context),
+       body: NotificationListener(
+           onNotification: (notificationInfo){
+             if(notificationInfo is UserScrollNotification){
+               FocusScopeNode currentFocus = FocusScope.of(context);
+               if (!currentFocus.hasPrimaryFocus) {
+                 currentFocus.unfocus();
+               }
+             }
+             return true;
+
+           },
+
+           child: _getBody(context)),
        key: controller.scaffoldKey,
      drawer: const CustomNavigationDrawer(),
        );
@@ -61,7 +80,7 @@ Widget _getBody(BuildContext context){
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Obx(()=>optionStatus(controller.activeSelected.value?AppColors.primary:AppColors.textFieldBackground, 'Active')),
-                  Obx(()=>optionStatus(controller.hiddenSelected.value?AppColors.primary:AppColors.textFieldBackground, 'Hidden')),
+                  /*Obx(()=>optionStatus(controller.hiddenSelected.value?AppColors.primary:AppColors.textFieldBackground, 'Hidden')),*/
                   Obx(()=>optionStatus(controller.draftSelected.value?AppColors.primary:AppColors.textFieldBackground, 'Draft')),
                 ],
               ),
@@ -80,15 +99,26 @@ Widget _getBody(BuildContext context){
                 ),
               ),
               const SizedBox(height: 20,),
-              Container(
-                  height: 170,
-                  width: Get.width,
-                  child: GestureDetector(
+              Row(
+                children: [
+                  Expanded(child: Text('Upload Photo',style: heading1SemiBold(color: AppColors.primary,fontSize: 15),)),
+                  GestureDetector(
                       onTap: (){
                         controller.onImageTap();
                       },
-                      child: Obx(() =>  controller.photoImage.value.path!=''?Image.file(controller.photoImage.value,fit: BoxFit.cover):Image.asset(Img.get('upload_image.png'),fit: BoxFit.cover))
-                  ),
+                      child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 8),
+                          decoration: BoxDecoration(
+                              color: AppColors.darkPink,
+                              borderRadius: BorderRadius.circular(5)),
+                          child: Text('Add',textAlign: TextAlign.center,style: bodyMediumMedium(color: AppColors.white,fontSize: 13,fontWeight: FontWeight.w500),)))
+                ],
+              ),
+              const SizedBox(height: 10,),
+              Container(
+                  height: 170,
+                  width: Get.width,
+                  child: Obx(() =>  controller.photoImage.value.path!=''?Image.file(controller.photoImage.value,fit: BoxFit.cover):Image.asset(Img.get('upload_image.png'),fit: BoxFit.cover)),
 
               ),
               Obx(
@@ -125,10 +155,30 @@ Widget _getBody(BuildContext context){
                       itemCount: controller.listOfImages.length,
                       itemBuilder: (BuildContext context,int index){
                         if (controller.listOfImages.isNotEmpty) {
-                          return Container(
-                              height: 60,width: 120,
-                           padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Image.file(controller.listOfImages[index],fit: BoxFit.cover,),
+                          return Stack(
+                            children: [
+                              Container(
+                                  height: 60,width: 120,
+                               padding: const EdgeInsets.symmetric(horizontal: 10),
+                                child: Image.file(controller.listOfImages[index],fit: BoxFit.cover,),
+                              ),
+                              Positioned(
+                                right: 2,
+                                child: GestureDetector(
+                                  onTap: (){
+                                    controller.listOfImages.removeAt(index);
+                                  },
+                                  child: Align(
+                                    alignment: Alignment.topRight,
+                                    child: CircleAvatar(
+                                      radius: 8,
+                                      backgroundColor: AppColors.filterContainer,
+                                      child: Icon(Icons.close, color: Colors.red,size: 12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           );
                         } else {
                           return const Center(child: CircularProgressIndicator());
@@ -146,8 +196,7 @@ Widget _getBody(BuildContext context){
                       ],
                     ),
                   )
-                ),
-              ),
+                ),),
               Obx(
                     ()=> Visibility(
                   visible: controller.isAdditionalImages.value,
@@ -163,7 +212,7 @@ Widget _getBody(BuildContext context){
                   formWidget(
                     focusNode:controller.productNameFocusNode,
                       onChanged: controller.pNameValidation,
-                      title: 'Product Name*',hint: 'product name',textEditingController: controller.productNameTEController),
+                      title: 'Promo Name*',hint: 'promo name',textEditingController: controller.productNameTEController),
                   Obx(
                         ()=> Visibility(
                       visible: controller.productNameErrorVisible.value,
@@ -178,8 +227,8 @@ Widget _getBody(BuildContext context){
                           formWidget(
                               focusNode:controller.priceFocusNode,
                             keyBoardInput: TextInputType.number,
-                              onChanged: controller.priceValidation,
-                              title: 'Price*',hint: '\$1000',textEditingController: controller.priceTEController),
+                             // onChanged: controller.priceValidation,
+                              title: 'Price',hint: '\$1000',textEditingController: controller.priceTEController),
                           Obx(
                                 ()=> Visibility(
                               visible: controller.priceErrorVisible.value,
@@ -192,12 +241,19 @@ Widget _getBody(BuildContext context){
                       Expanded(child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Obx(()=> formWidget(
-                            focusNode: controller.discountFocusNode,
-                                keyBoardInput: TextInputType.number,
-                                onChanged: controller.discountValidation,
-                                enabled: controller.isDiscount.value,
-                                title: 'Discount*',hint: controller.isPercentage.value?"10%":'\$500',textEditingController: controller.discountTEController),
+                          GestureDetector(
+                            onTap: (){
+                              if(!controller.priceValidation(controller.priceTEController.text)) {
+                                controller.chooseDiscountCategory();
+                              }
+                            },
+                            child: Obx(()=> formWidget(
+                              focusNode: controller.discountFocusNode,
+                                  keyBoardInput: TextInputType.number,
+                                  onChanged: controller.discountValidation,
+                                  enabled: controller.isDiscount.value,
+                                  title: 'Discount',hint: controller.isPercentage.value?"10%":'\$500',textEditingController: controller.discountTEController),
+                            ),
                           ),
                           Obx(
                                 ()=> Visibility(
@@ -218,7 +274,7 @@ Widget _getBody(BuildContext context){
                           formWidget(
                             focusNode: controller.discountStartFocusNode,
                               onChanged: controller.discountStartDateValidation,
-                              title: 'Discount Start Date*',hint: '1989-03-23',textEditingController: controller.discountStartTEController),
+                              title: 'Discount Start Date',hint: '2023-01-01',textEditingController: controller.discountStartTEController),
                           Obx(
                                 ()=> Visibility(
                               visible: controller.discountStartErrorVisible.value,
@@ -234,7 +290,7 @@ Widget _getBody(BuildContext context){
                           formWidget(
                             focusNode: controller.discountEndFocusNode,
                               onChanged: controller.discountEndDateValidation,
-                              title: 'Discount Last Date*',hint: 'date',textEditingController: controller.discountEndTEController),
+                              title: 'Discount Last Date',hint: '2023-01-01',textEditingController: controller.discountEndTEController),
                           Obx(
                                 ()=> Visibility(
                               visible: controller.discountEndErrorVisible.value,
@@ -254,22 +310,28 @@ Widget _getBody(BuildContext context){
                   ),
                   GestureDetector(
                       onTap: () async{
+                        ProgressDialog p=ProgressDialog();
+                        p.showDialog(title: 'Please wait..');
                         await controller.getCurrentPosition();
                         controller.loadData();
                         controller.markers.addAll(controller.listOfMarkers);
-                        showBottomSheet(context);
+                        if(controller.markers.isNotEmpty){
+                          p.dismissDialog();
+                          showBottomSheet(context);
+                        }
+
                       },
                       child: Obx(()=>formWidget(
                           focusNode: controller.businessAddressFocusNode,
-                          title: 'Business Address*',hint: '',textEditingController: controller.businessAddressTEController.value,onChanged: controller.businessAddValidation))),
+                          title: 'Promo Address*',hint: '',textEditingController: controller.businessAddressTEController.value,onChanged: controller.businessAddValidation))),
                   Obx(
                         ()=> Visibility(
                       visible: controller.businessAddressErrorVisible.value,
                       child: Text(controller.businessAddressErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
                     ),
                   ),
-                  SizedBox(height: 10,),
-                  titleWidget(title: '+ Add Social Links*'),
+                  const SizedBox(height: 10,),
+                  titleWidget(title: '+ Add Social Links'),
                   addLinkWidget(),
                   Obx(
                       ()=> Visibility(
@@ -277,7 +339,15 @@ Widget _getBody(BuildContext context){
                         child: addLinkTitleWidget(title: 'Add Link')),
                   ),
                   dropDown(),
-                  addTextWidget(),
+                  Obx(
+                        ()=> Visibility(
+                      visible: controller.isCategory.value,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 5),
+                        child: Text(controller.categoryError.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                      ),
+                    ),
+                  ),
                   Padding(
                     padding: const EdgeInsets.only(top: 60,bottom: 10),
                     child: Row(
@@ -344,12 +414,12 @@ Widget optionStatus(Color color, String title){
               focusNode: focusNode,
               keyBoardType: keyBoardInput,
               readOnly: title.contains('Discount Start Date')||title.contains('Discount Last Date')?true:false,
-              enabled:title.contains('Business Address')?false:enabled??true,
+              enabled:title.contains('Promo Address')?false:enabled??true,
               hintText: hint,suffixIcon: 
-          title.contains('Business Address')?Icon(Icons.location_on,color: AppColors.darkPink,):
-              title.contains('Discount*')?GestureDetector(
+          title.contains('Promo Address')?Icon(Icons.location_on,color: AppColors.darkPink,):
+              title=='Discount'?GestureDetector(
                   onTap: (){
-                    controller.isPercentage.value=!controller.isPercentage.value;
+                   // controller.isPercentage.value=!controller.isPercentage.value;
                   },
                   child: Icon(controller.isPercentage.value?Icons.percent:Icons.attach_money,color: AppColors.darkPink,size: 17,)):
           title.contains('Discount Start Date')||title.contains('Discount Last Date')?GestureDetector(
@@ -378,12 +448,14 @@ Widget optionStatus(Color color, String title){
         alignment: Alignment.bottomRight,
         child: GestureDetector(
             onTap: (){
-              if(controller.linkList.length<9) {
+              chooseSocialLink();
+             /* if(controller.linkList.length<9) {
+                //kdsjkssdkjksajkdjkasjdk
                 controller.linkList.add(createTextField());
                 if(controller.linkList.length==9){
                   controller.addLinkButtonVisible.value=false;
                 }
-              }
+              }*/
             },
             child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 8),
@@ -458,107 +530,119 @@ Widget optionStatus(Color color, String title){
   Future<dynamic> showBottomSheet(BuildContext context){
     return showModalBottomSheet(
         isScrollControlled: true,
+        isDismissible:false,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(25.0),
           ),
         ),
         builder: (context) {
-          return Wrap(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 10),
-                  child: Row(
+          return WillPopScope(
+            onWillPop: () async {
+              await Future.delayed(const Duration(milliseconds: 500));
+              Get.back();
+              return Future.value(false);
+            },
+            child: Wrap(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 10),
+                    child: Row(
+                      children: [
+                        imageIcon(img: 'trending_icon.png',size: 20),
+                        const SizedBox(width: 4),
+                        Expanded(child: Text('Confirm Promo Location',style:heading1(fontSize: 18))),
+                        GestureDetector(
+                            onTap: () async{
+                              await Future.delayed(const Duration(milliseconds: 500));
+                          Get.back();
+                            },
+                            child: Icon(Icons.close,color: AppColors.darkPink,size: 20,))
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      imageIcon(img: 'trending_icon.png',size: 20),
-                      const SizedBox(width: 4),
-                      Expanded(child: Text('Confirm Promo Location',style:heading1(fontSize: 18))),
-                      GestureDetector(
-                          onTap: (){
-                            Get.back();
-                          },
-                          child: Icon(Icons.close,color: AppColors.darkPink,size: 20,))
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: primaryButton(
+                          color: AppColors.primary,
+                            height: 37,
+                            onPressed: () async{
+                          Prediction? p = await PlacesAutocomplete.show(
+                              context: context,
+                              apiKey: controller.kGoogleApiKey,
+                              mode: controller.mode,
+                              language: 'en',
+                              strictbounds: false,
+                              types: [""],
+                              decoration: InputDecoration(
+                                  hintText: 'Search',
+                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: Colors.white))),
+                              components: [Component(Component.country,"pk"),Component(Component.country,"ca")]);
+                         if(p!=null) {
+                           controller.displayPrediction(p);
+                         }
+                        }, buttonText: 'Search Place',textColor: AppColors.white),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
+                        child: Container(
+                          height: 250,
+                          child:  Obx(()=>GoogleMap(
+                                zoomGesturesEnabled: true, //enable Zoom in, out on map
+                                onMapCreated: (GoogleMapController googleMapController){
+                                 controller.googleMapController=googleMapController;
+                                  if(controller.gController.isCompleted){
+                                  }else {
+                                    controller.gController.complete(googleMapController);
+                                  }
+                                },
+                                mapType: MapType.normal,
+                                markers: Set<Marker>.of(controller.markers),
+                                initialCameraPosition: CameraPosition(
+                                  target: LatLng(controller.latLng!.latitude, controller.latLng!.longitude),
+                                  zoom: 14.4746,
+                                ),
+                              onTap: (LatLng latLng){
+                                controller.listOfMarkers.clear();
+                                controller.markers.clear();
+                                Marker newMarker=Marker(
+                                icon:BitmapDescriptor.fromBytes((controller.markerIcon)),
+                                markerId: const MarkerId('1'),
+                                position: LatLng(latLng.latitude, latLng.longitude),
+                                infoWindow:InfoWindow(title: controller.address.value),
+                                );
+                                controller.latLng=Position(longitude: latLng.longitude, latitude: latLng.latitude, timestamp: DateTime.now(), accuracy: 1, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0);
+                                  controller.markers.add(newMarker);
+                              },
+                            ),
+                          ),
+
+                          /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/)
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Row(
+                          children: [
+                            Expanded(child: primaryButton(buttonText: 'Cancel',color: AppColors.primary,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: () async{
+                              await Future.delayed(const Duration(milliseconds: 500));
+                              Get.back();
+                            })),
+                            Expanded(child: primaryButton(buttonText: 'Done',color: AppColors.darkPink,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: () async{
+                              await Future.delayed(const Duration(milliseconds: 500));
+                              Get.back();
+                              controller.onLocationUpdate();
+                            })),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: primaryButton(
-                        color: AppColors.primary,
-                          height: 37,
-                          onPressed: () async{
-                        Prediction? p = await PlacesAutocomplete.show(
-                            context: context,
-                            apiKey: controller.kGoogleApiKey,
-                            mode: controller.mode,
-                            language: 'en',
-                            strictbounds: false,
-                            types: [""],
-                            decoration: InputDecoration(
-                                hintText: 'Search',
-                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Colors.white))),
-                            components: [Component(Component.country,"pk"),Component(Component.country,"usa")]);
-                        controller.displayPrediction(p!);
-                      }, buttonText: 'Search Place',textColor: AppColors.white),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
-                      child: Container(
-                        height: 250,
-                        child:  Obx(()=>GoogleMap(
-                              zoomGesturesEnabled: true, //enable Zoom in, out on map
-                              onMapCreated: (GoogleMapController googleMapController){
-                                controller.googleMapController=googleMapController;
-                                if(controller.gController.isCompleted){}else {
-                                  controller.gController
-                                      .complete(googleMapController);
-                                }
-                              },
-                              mapType: MapType.normal,
-                              markers: Set<Marker>.of(controller.markers),
-                              initialCameraPosition: CameraPosition(
-                                target: LatLng(controller.latLng!.latitude, controller.latLng!.longitude),
-                                zoom: 14.4746,
-                              ),
-                            onTap: (LatLng latLng){
-                              controller.listOfMarkers.clear();
-                              controller.markers.clear();
-                              Marker newMarker=Marker(
-                              icon:BitmapDescriptor.fromBytes((controller.markerIcon)),
-                              markerId: const MarkerId('1'),
-                              position: LatLng(latLng.latitude, latLng.longitude),
-                              infoWindow:InfoWindow(title: controller.address.value),
-                              );
-                              controller.latLng!.latitude!=latLng.latitude;
-                              controller.latLng!.longitude!=latLng.longitude;
-                                controller.markers.add(newMarker);
-                            },
-                          ),
-                        ),
 
-                        /*  child: Image.asset('assets/images/map.png',height: 300,fit: BoxFit.cover,)*/)
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Row(
-                        children: [
-                          Expanded(child: primaryButton(buttonText: 'Cancel',color: AppColors.primary,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
-                            Get.back();
-                          })),
-                          Expanded(child: primaryButton(buttonText: 'Done',color: AppColors.darkPink,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
-                            Get.back();
-                            controller.onLocationUpdate();
-                          })),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-              ]
+                ]
+            ),
           );
         }, context: context);
   }
@@ -596,52 +680,251 @@ Widget optionStatus(Color color, String title){
       ),
     );
   }
-  
-  Widget addTextWidget(){
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          Icon(Icons.add,color: AppColors.darkPink),
-          const SizedBox(width: 10,),
-          Text('Add Sub-Category',style: heading1(color: AppColors.lightPink,fontSize: 19),)
-        ],
-      ),
-    );
+
+  void chooseSocialLink(){
+    showMessageDialogForSocialLink(
+        type: DialogType.NO_HEADER);
   }
+
+  void showMessageDialogForSocialLink(
+      {required DialogType type,
+      }) {
+    AwesomeDialog(
+      dismissOnBackKeyPress: true,
+      context: Get.context!,
+      dialogType: type,
+      headerAnimationLoop: false,
+      animType: AnimType.SCALE,
+      btnOkColor: AppColors.darkPink,
+      titleTextStyle: heading1SemiBold(color: AppColors.primary),
+      dismissOnTouchOutside: true,
+
+      body: SingleChildScrollView(
+        child: Container(
+          width: Get.width,
+          child: Column(
+            children: [
+              Text('Add Social Account',style: heading1SemiBold(color: AppColors.darkPink,fontWeight: FontWeight.w500,fontSize: 20),),
+              const SizedBox(height: 10,),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  MaterialButton(
+                    shape: const CircleBorder(),
+                    height: 35,
+                    color: AppColors.lightDividerColor,
+                    onPressed: () {
+                     if(controller.linkList.length<9 && !controller.text.contains('facebook')) {
+                       controller.linkList.add(createTextField('facebook'));
+                       controller.text.add('facebook');
+                       Get.back();
+                       if(controller.linkList.length==9){
+                         controller.addLinkButtonVisible.value=false;
+                       }
+                     }else{
+                       CustomDialogs().showMessageDialog(title: 'Alert', description: 'facebook Link already added', type: DialogType.INFO);
+                     }
+                  }, child: Image.asset(Img.get('facebook_icon.png'),height: 25,),),
+                  MaterialButton(
+                    shape: const CircleBorder(),
+                    height: 35,
+                    color: AppColors.lightDividerColor,
+                    onPressed: () {  if(controller.linkList.length<9 && !controller.text.contains('whatsapp')) {
+                    controller.linkList.add(createTextField('whatsapp'));
+                    controller.text.add('whatsapp');
+                    Get.back();
+                    if(controller.linkList.length==9){
+                      controller.addLinkButtonVisible.value=false;
+                    }
+                  }else{
+                    CustomDialogs().showMessageDialog(title: 'Alert', description: 'Whatsapp Link already added', type: DialogType.INFO);
+                  } }, child: Image.asset(Img.get('whatsapp_icon.png'),height: 25,),),
+                  MaterialButton(
+                    shape: const CircleBorder(),
+                    height: 35,
+                    color: AppColors.lightDividerColor,
+                    onPressed: () { if(controller.linkList.length<9 && !controller.text.contains('instagram')) {
+                    controller.linkList.add(createTextField('instagram'));
+                    controller.text.add('instagram');
+                    Get.back();
+                    if(controller.linkList.length==9){
+                      controller.addLinkButtonVisible.value=false;
+                    }
+                  }else{
+                    CustomDialogs().showMessageDialog(title: 'Alert', description: 'Instagram Link already added', type: DialogType.INFO);
+                  }  }, child: Image.asset(Img.get('instagram.png'),height: 25,),),
+                ],
+              ),
+              const SizedBox(height: 3),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  MaterialButton(
+                    shape: const CircleBorder(),
+                    height: 35,
+                    color: AppColors.lightDividerColor,
+                    onPressed: () {
+                    if(controller.linkList.length<9 && !controller.text.contains('youtube')) {
+                      controller.linkList.add(createTextField('youtube'));
+                      controller.text.add('youtube');
+                      Get.back();
+                      if(controller.linkList.length==9){
+                        controller.addLinkButtonVisible.value=false;
+                      }
+                    }else{
+                      CustomDialogs().showMessageDialog(title: 'Alert', description: 'youtube Link already added', type: DialogType.INFO);
+                    }
+                  }, child: Image.asset(Img.get('yotube_icon.png'),height: 25),),
+                  MaterialButton(
+                    shape: const CircleBorder(),
+                    height: 35,
+                    color: AppColors.lightDividerColor,
+                    onPressed: () {
+                    if(controller.linkList.length<9 && !controller.text.contains('pinterest')) {
+                      controller.linkList.add(createTextField('pinterest'));
+                      controller.text.add('pinterest');
+                      Get.back();
+                      if(controller.linkList.length==9){
+                        controller.addLinkButtonVisible.value=false;
+                      }
+                    }else{
+                      CustomDialogs().showMessageDialog(title: 'Alert', description: 'pinterest Link already added', type: DialogType.INFO);
+                    }
+                  }, child: Image.asset(Img.get('pinterest.png'),height: 25,),),
+                  MaterialButton(
+                    shape: const CircleBorder(),
+                    height: 35,
+                    color: AppColors.lightDividerColor,
+                    onPressed: () {
+                    if(controller.linkList.length<9 && !controller.text.contains('twitter')) {
+                      controller.linkList.add(createTextField('twitter'));
+                      controller.text.add('twitter');
+                      Get.back();
+                      if(controller.linkList.length==9){
+                        controller.addLinkButtonVisible.value=false;
+                      }
+                    }else{
+                      CustomDialogs().showMessageDialog(title: 'Alert', description: 'Twitter Link already added', type: DialogType.INFO);
+                    }
+                  }, child: Image.asset(Img.get('twitter_icon.png'),height: 25),),
+
+                ],
+              ),
+              const SizedBox(height:3),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  MaterialButton(
+                    shape: const CircleBorder(),
+                    height: 35,
+                    color: AppColors.lightDividerColor,
+                    onPressed: () {
+                    if(controller.linkList.length<9 && !controller.text.contains('reddit')) {
+                    controller.linkList.add(createTextField('reddit'));
+                    controller.text.add('reddit');
+                    Get.back();
+                    if(controller.linkList.length==9){
+                      controller.addLinkButtonVisible.value=false;
+                    }
+                  }else{
+                    CustomDialogs().showMessageDialog(title: 'Alert', description: 'Reddit Link already added', type: DialogType.INFO);
+                  }
+                    }, child: Image.asset(Img.get('reddit.png'),height: 25,),),
+                  MaterialButton(
+                    shape: const CircleBorder(),
+                    height: 35,
+                    color: AppColors.lightDividerColor,
+                    onPressed: () { if(controller.linkList.length<9 && !controller.text.contains('quora')) {
+                    controller.linkList.add(createTextField('quora'));
+                    controller.text.add('quora');
+                    Get.back();
+                    if(controller.linkList.length==9){
+                      controller.addLinkButtonVisible.value=false;
+                    }
+                  }else{
+                    CustomDialogs().showMessageDialog(title: 'Alert', description: 'Quora Link already added', type: DialogType.INFO);
+                  }   }, child: Image.asset(Img.get('quora.png'),height: 25,),),
+                  MaterialButton(
+                    shape: const CircleBorder(),
+                    height: 35,
+                    color: AppColors.lightDividerColor,
+                    onPressed: () {
+                    if(controller.linkList.length<9 && !controller.text.contains('linkedin')) {
+                      controller.linkList.add(createTextField('linkedin'));
+                      controller.text.add('linkedin');
+                      Get.back();
+                      if(controller.linkList.length==9){
+                        controller.addLinkButtonVisible.value=false;
+                      }
+                    }else{
+                      CustomDialogs().showMessageDialog(title: 'Alert', description: 'LinkedIn Link already added', type: DialogType.INFO);
+                    }
+                  }, child: Image.asset(Img.get('linkedin_icon.png'),height: 25,),),
+                ],
+              ),
+              const SizedBox(height:10),
+            ],
+          ),
+        ),
+      ),
+    ).show();
+  }
+
+
 
   Widget addLinkWidget(){
     return Obx(
       ()=> Column(
         children: [
           for(int index=0;index<controller.linkList.length;index++)
-          controller.linkList[index]
+          GestureDetector(
+              onTap: (){
+                controller.linkList.removeAt(index);
+                controller.text.removeAt(index);
+                controller.linkListTEController.removeAt(index);
+              },
+              child: controller.linkList[index])
         ],
       ),
     );
   }
 
-  Widget createTextField() {
+  Widget createTextField(String text) {
     TextEditingController linkTypeController = TextEditingController();
     controller.linkListTEController.add(linkTypeController);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
-      child: customTextField(
-          controller: linkTypeController,
-        hintText: 'https://abcd',
-        suffixIcon:
-        Padding(padding: const EdgeInsets.only(left: 10,top: 12,bottom: 12),child: Image.asset(Img.get(
-            controller.linkListTEController.indexOf(linkTypeController)==0?'facebook_icon.png':
-            controller.linkListTEController.indexOf(linkTypeController)==1?'whatsapp_icon.png' :
-            controller.linkListTEController.indexOf(linkTypeController)==2?'instagram.png' :
-            controller.linkListTEController.indexOf(linkTypeController)==3?'yotube_icon.png' :
-            controller.linkListTEController.indexOf(linkTypeController)==4?'pinterest.png' :
-            controller.linkListTEController.indexOf(linkTypeController)==5?'twitter_icon.png' :
-            controller.linkListTEController.indexOf(linkTypeController)==6?'reddit.png' :
-            controller.linkListTEController.indexOf(linkTypeController)==7?'quora.png' : 'linkedin_icon.png'
-        )),)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+              decoration: BoxDecoration(
+                color: AppColors.filterContainer,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              padding: EdgeInsets.all(2),
+              child: const Icon(Icons.close,color: Colors.red,size: 15,)),
+          SizedBox(height: 2),
+          customTextField(
+              controller: linkTypeController,
+            hintText: 'https://wwww.$text.abcd',
+            suffixIcon:
+            Padding(padding: const EdgeInsets.only(left: 10,top: 12,bottom: 12),child: Image.asset(Img.get(
+                text=='facebook'?'facebook_icon.png':
+                text=='whatsapp'?'whatsapp_icon.png' :
+                text=='instagram'?'instagram.png' :
+                text=='youtube'?'yotube_icon.png' :
+                text=='pinterest'?'pinterest.png' :
+                text=='twitter'?'twitter_icon.png' :
+                text=='reddit'?'reddit.png' :
+                text=='quora'?'quora.png' : 'linkedin_icon.png'
+            )),)),
+        ],
+      ),
     );
   }
+
+
 
 
 }

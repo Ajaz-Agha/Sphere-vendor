@@ -1,4 +1,3 @@
-
 import 'package:get/get.dart';
 import 'package:sphere_vendor/model/user_login_model.dart';
 import 'package:sphere_vendor/web_services/user_service.dart';
@@ -12,24 +11,24 @@ RxBool isTap=false.obs;
 RxBool isPromotionOption=false.obs;
   Future<void> onDrawerItemClick({required String title}) async {
    // isTap.value=!isTap.value;
-    if(title!='My Promotion') {
+    if(title!='My Promotions') {
       Get.back();
     }
     if (title == "User Profile") {
       Get.offAllNamed(kVendorProfileScreen);
     }
-    else if (title == "My Promotion") {
+    else if (title == "My Promotions") {
      isPromotionOption.value=!isPromotionOption.value;
-    }else if(title=="Hidden"){
-      Get.toNamed(kVendorHiddenScreen);
     }else if(title=="Active"){
-      Get.toNamed(kVendorActiveScreen);
+      Get.offNamed(kVendorActiveScreen);
     }else if(title=="Draft"){
-      Get.toNamed(kVendorDraftScreen);
-    } else if (title == "Notification") {
+      Get.offNamed(kVendorDraftScreen);
+    } else if (title == "Notifications") {
       Get.toNamed(kNotificationScreen);
     }else if (title == "Settings") {
       Get.toNamed(kUpdatePasswordScreen);
+    }else if (title == "Terms of Service") {
+      Get.toNamed(kGeneralScreen,arguments: title);
     }else if(title == "LOGOUT"){
       CustomDialogs().confirmationDialog(
           message: "Are you sure you want to logout?",
