@@ -550,6 +550,8 @@ Future<void> onUploadImage() async{
           locationModel.isDefault=1;
           userSession.updateSessionData(userLoginModelFromSession.value);
           pd.dismissDialog();
+          await Future.delayed(const Duration(milliseconds: 500));
+          Get.back();
         } else {
           pd.dismissDialog();
           CustomDialogs().showMessageDialog(title: "Alert",

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:sphere_vendor/utils/app_colors.dart';
 import '../../controller/home_redeem_inside_screen_controller.dart';
 import '../../utils/app_constants.dart';
@@ -91,7 +92,16 @@ class HomeScreenDetailRedeemScreen extends GetView<HomeScreenDetailRedeemScreenC
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text(controller.promoModel.userDetailModel.businessName,style:bodyMediumMedium(color: AppColors.primary,fontSize: 15),),
+                  Row(
+                    children: [
+                      Expanded(child: Text(controller.promoModel.userDetailModel.businessName,style:bodyMediumMedium(color: AppColors.primary,fontSize: 15),)),
+                      GestureDetector(
+                          onTap: (){
+                            Share.share('Let\'s CheckOut!\nBusiness name: ${controller.promoModel.userDetailModel.businessName}\nPromo name: ${controller.promoModel.productName}\nDescription :${controller.promoModel.description}\nPromo price: ${controller.promoModel.price}\nhttps://sphereVendor.net');
+                          },
+                          child: iconContainer(icon: Icons.share)),
+                    ],
+                  ),
                   const SizedBox(height: 13,),
                   informationWidget(),
                   const SizedBox(height: 13,),

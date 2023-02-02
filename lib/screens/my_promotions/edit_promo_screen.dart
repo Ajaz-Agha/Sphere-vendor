@@ -502,7 +502,8 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                         const SizedBox(width: 4),
                         Expanded(child: Text('Confirm Promo Location',style:heading1(fontSize: 18))),
                         GestureDetector(
-                            onTap: (){
+                            onTap: () async{
+                              await Future.delayed(const Duration(milliseconds: 500));
                               Get.back();
                             },
                             child: Icon(Icons.close,color: AppColors.darkPink,size: 20,))
@@ -574,10 +575,14 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         child: Row(
                           children: [
-                            Expanded(child: primaryButton(buttonText: 'Cancel',color: AppColors.primary,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
+                            Expanded(child: primaryButton(buttonText: 'Cancel',color: AppColors.primary,textColor: AppColors.white,height: 40,fontSize: 18,
+                                onPressed: () async{
+                              await Future.delayed(const Duration(milliseconds: 500));
                               Get.back();
                             })),
-                            Expanded(child: primaryButton(buttonText: 'Done',color: AppColors.darkPink,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
+                            Expanded(child: primaryButton(buttonText: 'Done',color: AppColors.darkPink,textColor: AppColors.white,height: 40,fontSize: 18,
+                                onPressed: () async{
+                              await Future.delayed(const Duration(milliseconds: 500));
                               Get.back();
                               controller.onLocationUpdate();
                             })),

@@ -434,8 +434,8 @@ Widget formWidget(
                              await Future.delayed(const Duration(milliseconds: 500));
                               Get.back();
                             })),
-                            Expanded(child: primaryButton(buttonText: 'Done',color: AppColors.darkPink,textColor: AppColors.white,height: 40,fontSize: 18,onPressed: (){
-                             Get.back();
+                            Expanded(child: primaryButton(buttonText: 'Done',color: AppColors.darkPink,textColor: AppColors.white,height: 40,fontSize: 18,
+                                onPressed: () async{
                               controller.businessAddTEController.value.text=controller.address.value;
                               controller.onLocationUpdate();
                             })),

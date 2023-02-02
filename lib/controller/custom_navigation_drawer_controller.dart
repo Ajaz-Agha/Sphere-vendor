@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:sphere_vendor/model/user_login_model.dart';
 import 'package:sphere_vendor/web_services/user_service.dart';
 
@@ -38,6 +39,8 @@ RxBool isPromotionOption=false.obs;
             Get.offAllNamed(kLoginScreen);
           }
       );
+    }else if(title=='Share'){
+      Share.share('https://sphereVendor.net');
     }
 
   }

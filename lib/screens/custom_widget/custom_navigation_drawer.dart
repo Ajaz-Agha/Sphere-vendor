@@ -120,6 +120,33 @@ class CustomNavigationDrawer extends GetView<CustomNavigationDrawerController>{
                     ),
                     const SizedBox(height: 12),
                     GestureDetector(
+                      onTap: () => controller.onDrawerItemClick(title: 'Share'),
+                      child: Center(
+                        child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 30),
+                            height: 50,
+                            width: Get.width/2,
+                            decoration: BoxDecoration(
+                                color: AppColors.darkPink,
+                                borderRadius: BorderRadius.circular(10)
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.share,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                                const SizedBox(width: 5,),
+                                Text('Share',style: headingBold(color: AppColors.white),)
+                              ],
+                            )
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    GestureDetector(
                       onTap: () => controller.onDrawerItemClick(title: 'LOGOUT'),
                       child: Center(
                         child: Container(
