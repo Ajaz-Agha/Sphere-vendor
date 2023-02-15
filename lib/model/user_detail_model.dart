@@ -22,11 +22,40 @@ class UserDetailModel{
   String description='';
   int userId=-1;
   RxInt totalFav=0.obs;
+  int otpCode=-1;
   List<LocationModel> locationModelList=[];
   List<CategoryModel> listOfCategories=[];
   UserDetailModel.empty();
 
   UserDetailModel.fromJSON(Map<String, dynamic> json){
+    uAccEmail = json['email'] ?? "";
+    userId= json['id'] ?? -1;
+    firstName= json['first_name'] ?? "";
+    lastName= json['last_name'] ?? "";
+    profileImage= json['profile_image'] ?? "";
+    profileImageUrl= json['profile_image_url'] ?? "";
+    coverImageUrl= json['cover_image_url'] ?? "";
+    coverImage= json['cover_image'] ?? "";
+    phone= json['phone'] ?? "";
+    latitude= json['latitude'] ?? "";
+    longitude= json['longitude'] ?? "";
+    role=json["role"]??"";
+    description=json["description"]??"";
+    createdAt=json["created_at"]??"";
+    businessName=json["business_name"]??'';
+    totalFav.value=json["total_favorites"]??0;
+    for(var x in json["locations"]??[]) {
+      locationModelList.add(LocationModel.fromJson(x));
+    }
+    for(var x in json["categories"]??[]) {
+      listOfCategories.add(CategoryModel.fromJson(x));
+    }
+  }
+
+
+  UserDetailModel.fromJSONOTP(Map<String, dynamic> json,String message){
+    requestErrorMessage=message;
+    otpCode=json['code']??-1;
     uAccEmail = json['email'] ?? "";
     userId= json['id'] ?? -1;
     firstName= json['first_name'] ?? "";

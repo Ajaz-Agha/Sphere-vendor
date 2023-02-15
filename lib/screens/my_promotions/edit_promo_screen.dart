@@ -200,7 +200,7 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                       Obx(
                             ()=> Visibility(
                           visible: controller.productNameErrorVisible.value,
-                          child: Text(controller.productNameErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                          child: Text(controller.productNameErrorMsg.value,style: heading1(color: AppColors.requiredColor,fontSize: 12),),
                         ),
                       ),
                       Row(
@@ -215,7 +215,7 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                               Obx(
                                     ()=> Visibility(
                                   visible: controller.priceErrorVisible.value,
-                                  child: Text(controller.priceErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                                  child: Text(controller.priceErrorMsg.value,style: heading1(color: AppColors.requiredColor,fontSize: 12),),
                                 ),
                               ),
                             ],
@@ -241,7 +241,7 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                               Obx(
                                     ()=> Visibility(
                                   visible: controller.discountErrorVisible.value,
-                                  child: Text(controller.discountErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                                  child: Text(controller.discountErrorMsg.value,style: heading1(color: AppColors.requiredColor,fontSize: 12),),
                                 ),
                               ),
                             ],
@@ -260,7 +260,7 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                               Obx(
                                     ()=> Visibility(
                                   visible: controller.discountStartErrorVisible.value,
-                                  child: Text(controller.discountStartErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                                  child: Text(controller.discountStartErrorMsg.value,style: heading1(color: AppColors.requiredColor,fontSize: 12),),
                                 ),
                               ),
                             ],
@@ -275,7 +275,7 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                               Obx(
                                     ()=> Visibility(
                                   visible: controller.discountEndErrorVisible.value,
-                                  child: Text(controller.discountEndErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                                  child: Text(controller.discountEndErrorMsg.value,style: heading1(color: AppColors.requiredColor,fontSize: 12),),
                                 ),
                               ),
                             ],
@@ -286,13 +286,16 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                       Obx(
                             ()=> Visibility(
                           visible: controller.descriptionErrorVisible.value,
-                          child: Text(controller.descriptionErrorMsg.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                          child: Text(controller.descriptionErrorMsg.value,style: heading1(color: AppColors.requiredColor,fontSize: 12),),
                         ),
                       ),
                       GestureDetector(
                           onTap: () async{
                             ProgressDialog p=ProgressDialog();
                             p.showDialog(title: 'Please wait..');
+                            if(controller.markers.isNotEmpty){
+                              controller.markers.clear();
+                            }
                             await controller.getCurrentPosition();
                             controller.loadData();
                             controller.markers.addAll(controller.listOfMarkers);
@@ -318,7 +321,7 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                           visible: controller.isCategory.value,
                           child: Padding(
                             padding: const EdgeInsets.only(top: 5),
-                            child: Text(controller.categoryError.value,style: heading1(color: AppColors.primary,fontSize: 12),),
+                            child: Text(controller.categoryError.value,style: heading1(color: AppColors.requiredColor,fontSize: 12),),
                           ),
                         ),
                       ),
@@ -563,8 +566,13 @@ class EditPromoScreen extends GetView<EditPromoScreenController>{
                                   position: LatLng(latLng.latitude, latLng.longitude),
                                   infoWindow:InfoWindow(title: controller.address.value),
                                 );
-                                controller.latLng=Position(longitude: latLng.longitude, latitude: latLng.latitude, timestamp: DateTime.now(), accuracy: 1, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0);
+                                // controller.latLng=Position(longitude: latLng.longitude, latitude: latLng.latitude, timestamp: DateTime.now(), accuracy: 1, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0);
                                 controller.markers.add(newMarker);
+                                controller.latitude=latLng.latitude;
+                                controller.longitude=latLng.longitude;
+                                controller.latLng= Position(longitude: controller.longitude, latitude: controller.latitude, timestamp: DateTime.now(), accuracy: 1, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0);
+                                controller.getAddressFromLatLong(Position(longitude: controller.longitude, latitude: controller.latitude, timestamp: DateTime.now(), accuracy: 1, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0));
+
                               },
                             ),
                             ),

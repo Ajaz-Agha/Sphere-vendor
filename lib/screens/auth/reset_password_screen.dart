@@ -60,13 +60,37 @@ Widget _getBody({required String heading, required String description}){
                 ),
               ),
             ),
-            SizedBox(height: 40,),
+            const SizedBox(height: 40,),
             Obx(() => Visibility(
                 visible: controller.otpWidgetVisible.value,
-                child: otpCodeWidget()
+                child: Column(
+                  children: [
+                    otpCodeWidget(),
+                    const SizedBox(height: 30),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Don't receive code?",
+                          style: bodyMediumMedium(color: AppColors.secondary,fontSize: 16)
+                        ),
+                        const SizedBox(width: 10),
+                        GestureDetector(
+                          onTap: (){
+                            controller.onResendOtp();
+                          },
+                          child: Text(
+                            'Resend OTP',
+                            style: bodyMediumMedium(color: AppColors.primary,fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    )
+                  ],
+                )
 
             )),
-            const SizedBox(height: 130,),
+            const SizedBox(height: 80),
             Obx(
                 ()=> primaryButton(buttonText: controller.otpWidgetVisible.value?"Verify Email":"Send me Password",textColor: AppColors.white,color: AppColors.darkPink,isMargin: false,onPressed: (){
                   if(controller.otpWidgetVisible.value){

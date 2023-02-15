@@ -21,4 +21,5 @@ class AppColors {
   static Color emptyProfile = const Color(0xFF606060);
   static Color lightGrey = const Color(0xFFB8B8B8);
   static Color textNotificationColor = const Color(0xFF575757);
+  static Color requiredColor = const Color(0xFFEA0B0B);
 }

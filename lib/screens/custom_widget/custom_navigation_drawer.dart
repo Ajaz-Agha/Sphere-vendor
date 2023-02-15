@@ -119,7 +119,7 @@ class CustomNavigationDrawer extends GetView<CustomNavigationDrawerController>{
                       ),
                     ),
                     const SizedBox(height: 12),
-                    GestureDetector(
+                  /*  GestureDetector(
                       onTap: () => controller.onDrawerItemClick(title: 'Share'),
                       child: Center(
                         child: Container(
@@ -145,7 +145,7 @@ class CustomNavigationDrawer extends GetView<CustomNavigationDrawerController>{
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 12),*/
                     GestureDetector(
                       onTap: () => controller.onDrawerItemClick(title: 'LOGOUT'),
                       child: Center(

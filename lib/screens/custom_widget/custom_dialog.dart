@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -295,15 +296,14 @@ class CustomDialogs {
                         ),*/
                         GestureDetector(
                           onTap: () {
-                            UserService().userLogOut();
+                           /* UserService().userLogOut();
                             UserSession().logOut();
-                            Get.offAllNamed(kLoginScreen);
+                            Get.offAllNamed(kLoginScreen);*/
+                            SystemNavigator.pop();
                           },
                           child:  Padding(
-                            padding: const EdgeInsets.only(
-                              left: 10,
-                              right: 15,
-                              top: 5,
+                            padding: const EdgeInsets.symmetric(
+                           horizontal: 8
                             ),
                             child: Text(
                               "YES",

@@ -20,3 +20,4 @@ const String kUpdateLocationURL = "${_kBaseURL}updateLocation";
 const String kGetNotificationsURL = "${_kBaseURL}getNotifications";
 const String kSocialLoginURL = "${_kBaseURL}socialLogin";
 const String kDeletePromoUrl = "${_kBaseURL}destroy";
+const String kResendOtpUrl = "${_kBaseURL}resend-code";

@@ -77,11 +77,11 @@ class HomeScreenDetailRedeemScreen extends GetView<HomeScreenDetailRedeemScreenC
                       ),
                       Expanded(child: Text('100',style: heading1SemiBold(color: AppColors.darkPink,fontSize: 14),)),*/
                       Expanded(child: Text(controller.promoModel.address,style: heading1(color: AppColors.primary,fontSize: 15),)),
-                      GestureDetector(
+                      /*GestureDetector(
                           onTap: (){
                             controller.makePhoneCall(controller.promoModel.userDetailModel.phone);
                           },
-                          child: callWidget(icon: 'call_icon.png', text: 'Call'))
+                          child: callWidget(icon: 'call_icon.png', text: 'Call'))*/
                     ],
                   ),
                   const SizedBox(height: 15,),
@@ -95,11 +95,11 @@ class HomeScreenDetailRedeemScreen extends GetView<HomeScreenDetailRedeemScreenC
                   Row(
                     children: [
                       Expanded(child: Text(controller.promoModel.userDetailModel.businessName,style:bodyMediumMedium(color: AppColors.primary,fontSize: 15),)),
-                      GestureDetector(
+                     /* GestureDetector(
                           onTap: (){
-                            Share.share('Let\'s CheckOut!\nBusiness name: ${controller.promoModel.userDetailModel.businessName}\nPromo name: ${controller.promoModel.productName}\nDescription :${controller.promoModel.description}\nPromo price: ${controller.promoModel.price}\nhttps://sphereVendor.net');
+                            Share.share('Let\'s CheckOut!\nBusiness name: ${controller.promoModel.userDetailModel.businessName}\nPromo name: ${controller.promoModel.productName}\nDescription :${controller.promoModel.description}\nPromo price: ${controller.promoModel.price}\nhttps://www.sphereclub.net/');
                           },
-                          child: iconContainer(icon: Icons.share)),
+                          child: iconContainer(icon: Icons.share)),*/
                     ],
                   ),
                   const SizedBox(height: 13,),

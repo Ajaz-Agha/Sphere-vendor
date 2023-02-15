@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:sphere_vendor/model/forgot_password_model.dart';
 import 'package:sphere_vendor/model/location_model.dart';
+import 'package:sphere_vendor/model/user_detail_model.dart';
 import 'package:sphere_vendor/web_services/web_url.dart';
 import '../model/response_model.dart';
 import '../model/user_login_model.dart';
@@ -149,6 +151,30 @@ class UserService{
 
     }
    return forgotPasswordModel;
+  }
+
+
+  Future<UserDetailModel> resendOTP({required String email})async{
+    UserDetailModel userDetailModel=UserDetailModel.empty();
+    Map<String,String> requestBody = {
+      "email":email,
+    };
+    ResponseModel responseModel = await _httpClient.postRequest(url: kResendOtpUrl,
+        requestBody: requestBody,needHeaders: false);
+    if((responseModel.statusCode == 400 || responseModel.statusCode == 500 )){
+      userDetailModel.requestErrorMessage=kNetworkError;
+      return userDetailModel;
+    }else if(responseModel.statusCode == 408){
+      userDetailModel.requestErrorMessage=kPoorInternetConnection;
+      return userDetailModel;
+    }else if(responseModel.statusDescription=="Success." && responseModel.data!=null){
+      userDetailModel.requestErrorMessage=responseModel.statusDescription;
+      userDetailModel=UserDetailModel.fromJSONOTP(responseModel.data,responseModel.statusDescription);
+      return userDetailModel;
+
+    }
+    userDetailModel.requestErrorMessage=responseModel.statusDescription;
+    return userDetailModel;
   }
 
   Future<String> updatePassword({required String email,required String password,required String confirmPassword})async{

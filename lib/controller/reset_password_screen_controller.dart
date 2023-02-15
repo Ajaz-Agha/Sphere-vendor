@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sphere_vendor/model/forgot_password_model.dart';
+import 'package:sphere_vendor/model/user_detail_model.dart';
 import 'package:sphere_vendor/utils/app_constants.dart';
 import 'package:sphere_vendor/web_services/user_service.dart';
 import '../screens/custom_widget/custom_dialog.dart';
@@ -18,10 +21,41 @@ class ResetPasswordScreenController extends GetxController{
 
   RxBool otpWidgetVisible=false.obs,emailReadOnly=false.obs;
 
+  Timer timer=Timer(Duration(minutes: 1), () { });
+  RxInt start = 60.obs;
+
+  void startTimer() {
+    const oneSec = Duration(seconds: 1);
+    timer = Timer.periodic(
+      oneSec,
+          (Timer timer) {
+        if (start.value == 0) {
+            timer.cancel();
+        } else {
+            start.value--;
+        }
+      },
+    );
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+   // startTimer();
+  }
+
+  @override
+  void dispose() {
+    timer.cancel();
+    super.dispose();
+  }
+
+
   ForgotPasswordModel fPasswordModel=ForgotPasswordModel();
 
   String email='';
   RxString otpCode=''.obs;
+  RxBool isResend=false.obs;
 
   bool emailValidation(String value) {
     if (value.trim() == "") {
@@ -43,35 +77,65 @@ class ResetPasswordScreenController extends GetxController{
       emailFocusNode.unfocus();
     }
   }
+
   void onResetEmailTap() async{
     removeAFieldsFocus();
     bool isAllDataValid = false;
     isAllDataValid = !emailValidation(emailTEController.text);
     if(isAllDataValid) {
-      ProgressDialog pd = ProgressDialog();
-      pd.showDialog();
-      if (await CommonCode().checkInternetAccess()) {
-        ForgotPasswordModel forgotPasswordModel = await UserService().forgotPassword(email: emailTEController.text);
-        if (forgotPasswordModel.responseMessage=='Email sent successfully') {
-          pd.dismissDialog();
-          fPasswordModel=forgotPasswordModel;
-          otpWidgetVisible.value=true;
-          emailReadOnly.value=true;
+        } ProgressDialog pd = ProgressDialog();
+    pd.showDialog();
+    if (await CommonCode().checkInternetAccess()) {
+      ForgotPasswordModel forgotPasswordModel = await UserService().forgotPassword(email: emailTEController.text);
+      if (forgotPasswordModel.responseMessage=='Email sent successfully') {
+        pd.dismissDialog();
+        fPasswordModel=forgotPasswordModel;
+        otpWidgetVisible.value=true;
+        emailReadOnly.value=true;
 
-        } else {
-          pd.dismissDialog();
-          CustomDialogs().showMessageDialog(
-              title: "Alert",
-              description: forgotPasswordModel.responseMessage,
-              type: DialogType.ERROR);
-        }
       } else {
         pd.dismissDialog();
-        CustomDialogs().showMessageDialog(title: 'Alert',
-            description: kInternetMsg,
+        CustomDialogs().showMessageDialog(
+            title: "Alert",
+            description: forgotPasswordModel.responseMessage,
             type: DialogType.ERROR);
       }
+    } else {
+      pd.dismissDialog();
+      CustomDialogs().showMessageDialog(title: 'Alert',
+          description: kInternetMsg,
+          type: DialogType.ERROR);
     }
+
+  }
+
+  Future<void> onResendOtp() async{
+    ProgressDialog pd = ProgressDialog();
+    pd.showDialog(title: 'Please wait...');
+    if (await CommonCode().checkInternetAccess()) {
+      UserDetailModel response = await UserService().resendOTP(email: emailTEController.text);
+      if (response.requestErrorMessage=='Success.') {
+        pd.dismissDialog();
+        fPasswordModel.code=response.otpCode;
+        print('----------------->>>${otpCode.value}');
+        CustomDialogs().showMessageDialog(
+            title: "Success",
+            description: 'Otp Resend Successfully',
+            type: DialogType.ERROR);
+      } else {
+        pd.dismissDialog();
+        CustomDialogs().showMessageDialog(
+            title: "Alert",
+            description: response.requestErrorMessage,
+            type: DialogType.ERROR);
+      }
+    } else {
+      pd.dismissDialog();
+      CustomDialogs().showMessageDialog(title: 'Alert',
+          description: kInternetMsg,
+          type: DialogType.ERROR);
+    }
+
   }
 
   Future<void> onVerify() async{

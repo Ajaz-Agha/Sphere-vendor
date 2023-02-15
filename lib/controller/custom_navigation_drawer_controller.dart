@@ -40,7 +40,7 @@ RxBool isPromotionOption=false.obs;
           }
       );
     }else if(title=='Share'){
-      Share.share('https://sphereVendor.net');
+      Share.share('https://www.sphereclub.net/');
     }
 
   }
