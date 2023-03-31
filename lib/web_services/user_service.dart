@@ -11,240 +11,269 @@ import '../model/user_register_model.dart';
 import '../utils/app_constants.dart';
 import 'http_client.dart';
 
-class UserService{
-
+class UserService {
   static final UserService _instance = UserService._internal();
-  UserService._internal(){
+  UserService._internal() {
     _httpClient = HTTPClient();
   }
-  factory UserService()=>_instance;
+  factory UserService() => _instance;
 
   late HTTPClient _httpClient;
 
-  Future<UserLoginModel> loginUser({required String password,String email="",required deviceToken})async{
+  Future<UserLoginModel> loginUser(
+      {required String password,
+      String email = "",
+      required deviceToken}) async {
     UserLoginModel userLoginModel = UserLoginModel.empty();
-    Map<String,String> requestBody = {
-      "email":email,
-      "password":password,
-      "device_id":deviceToken
+    Map<String, String> requestBody = {
+      "email": email,
+      "password": password,
+      "device_id": deviceToken
     };
-    ResponseModel responseModel = await _httpClient.postRequest(url: kLoginUserURL,
-        requestBody: requestBody,needHeaders: false);
-    if((responseModel.statusCode == 400 || responseModel.statusCode == 500 )){
+    print("requestBody: " "${requestBody}");
+    ResponseModel responseModel = await _httpClient.postRequest(
+        url: kLoginUserURL, requestBody: requestBody, needHeaders: false);
+    if ((responseModel.statusCode == 400 || responseModel.statusCode == 500)) {
       userLoginModel.requestErrorMessage = kNetworkError;
       return userLoginModel;
-    }else if(responseModel.statusCode == 408){
+    } else if (responseModel.statusCode == 408) {
       userLoginModel.requestErrorMessage = kPoorInternetConnection;
       return userLoginModel;
-    }else if(( responseModel.statusCode == 606||responseModel.statusCode == 404) && responseModel.statusDescription.contains("Invalid Input")){
+    } else if ((responseModel.statusCode == 606 ||
+            responseModel.statusCode == 404) &&
+        responseModel.statusDescription.contains("Invalid Input")) {
       userLoginModel.requestErrorMessage = "Invalid Username or Password!";
       return userLoginModel;
-    }else if(responseModel.statusDescription=="Logged in successfully"  && responseModel.data != null && responseModel.data.length > 0){
-      userLoginModel = UserLoginModel.fromJSON(responseModel.data,responseModel.statusDescription);
+    } else if (responseModel.statusDescription == "Logged in successfully" &&
+        responseModel.data != null &&
+        responseModel.data.length > 0) {
+      userLoginModel = UserLoginModel.fromJSON(
+          responseModel.data, responseModel.statusDescription);
       return userLoginModel;
-
     }
     userLoginModel.requestErrorMessage = responseModel.statusDescription;
     return userLoginModel;
   }
 
-  Future<UserLoginModel> socialLoginUser({String email="",required deviceToken,String businessName=''})async{
+  Future<UserLoginModel> socialLoginUser(
+      {String email = "",
+      required deviceToken,
+      String businessName = ''}) async {
     UserLoginModel userLoginModel = UserLoginModel.empty();
-    Map<String,String> requestBody = {
-      "email":email,
-      "role":'vendor',
-      "device_id":deviceToken,
-      "business_name":businessName,
+    Map<String, String> requestBody = {
+      "email": email,
+      "role": 'vendor',
+      "device_id": deviceToken,
+      "business_name": businessName,
     };
-    ResponseModel responseModel = await _httpClient.postRequest(url: kSocialLoginURL,
-        requestBody: requestBody,needHeaders: false);
-    if((responseModel.statusCode == 400 || responseModel.statusCode == 500 )){
+    ResponseModel responseModel = await _httpClient.postRequest(
+        url: kSocialLoginURL, requestBody: requestBody, needHeaders: false);
+    if ((responseModel.statusCode == 400 || responseModel.statusCode == 500)) {
       userLoginModel.requestErrorMessage = kNetworkError;
       return userLoginModel;
-    }else if(responseModel.statusCode == 408){
+    } else if (responseModel.statusCode == 408) {
       userLoginModel.requestErrorMessage = kPoorInternetConnection;
       return userLoginModel;
-    }else if(( responseModel.statusCode == 606||responseModel.statusCode == 404) && responseModel.statusDescription.contains("Invalid Input")){
+    } else if ((responseModel.statusCode == 606 ||
+            responseModel.statusCode == 404) &&
+        responseModel.statusDescription.contains("Invalid Input")) {
       userLoginModel.requestErrorMessage = "Invalid Username or Password!";
       return userLoginModel;
-    }else if(responseModel.statusDescription=="Social Login Success"  && responseModel.data != null && responseModel.data.length > 0){
-      userLoginModel = UserLoginModel.fromJSON(responseModel.data,responseModel.statusDescription);
+    } else if (responseModel.statusDescription == "Social Login Success" &&
+        responseModel.data != null &&
+        responseModel.data.length > 0) {
+      userLoginModel = UserLoginModel.fromJSON(
+          responseModel.data, responseModel.statusDescription);
       return userLoginModel;
-
     }
     userLoginModel.requestErrorMessage = responseModel.statusDescription;
     return userLoginModel;
   }
 
-  Future<UserRegisterModel> registerUser(UserRegisterModel userRegisterModel)async{
-    Map<String,dynamic> requestBody = userRegisterModel.toJson();
-    ResponseModel responseModel = await _httpClient.postRequest(url: kRegisterUserURL,
-        requestBody: requestBody,needHeaders: false);
-    if(responseModel.statusCode == 408){
-      userRegisterModel.response=kPoorInternetConnection;
+  Future<UserRegisterModel> registerUser(
+      UserRegisterModel userRegisterModel) async {
+    Map<String, dynamic> requestBody = userRegisterModel.toJson();
+    ResponseModel responseModel = await _httpClient.postRequest(
+        url: kRegisterUserURL, requestBody: requestBody, needHeaders: false);
+    if (responseModel.statusCode == 408) {
+      userRegisterModel.response = kPoorInternetConnection;
       return userRegisterModel;
-    }else if(responseModel.statusCode == 400 || responseModel.statusCode == 500){
-      userRegisterModel.response=kNetworkError;
+    } else if (responseModel.statusCode == 400 ||
+        responseModel.statusCode == 500) {
+      userRegisterModel.response = kNetworkError;
       return userRegisterModel;
-    }else if(responseModel.data != null && responseModel.data.length > 0
-        && responseModel.statusDescription == "User has been created successfully"){
-      userRegisterModel.response=responseModel.statusDescription;
+    } else if (responseModel.data != null &&
+        responseModel.data.length > 0 &&
+        responseModel.statusDescription ==
+            "User has been created successfully") {
+      userRegisterModel.response = responseModel.statusDescription;
       return userRegisterModel;
     }
-    userRegisterModel.response=responseModel.statusDescription;
+    userRegisterModel.response = responseModel.statusDescription;
     return userRegisterModel;
   }
 
-
-  Future<dynamic> updateProfile({required UserLoginModel userLoginModelForUpdate, required String imgPath,required String coverImagePath}) async {
+  Future<dynamic> updateProfile(
+      {required UserLoginModel userLoginModelForUpdate,
+      required String imgPath,
+      required String coverImagePath}) async {
     UserLoginModel userLoginModel = UserLoginModel.empty();
-    ResponseModel responseModel=ResponseModel();
-      responseModel = await _httpClient.postMultipartRequest(
+    ResponseModel responseModel = ResponseModel();
+    responseModel = await _httpClient.postMultipartRequest(
         userLoginModel: userLoginModelForUpdate,
         url: kUpdateUserProfileURL,
         imgPath: imgPath,
-        coverPath: coverImagePath
-      );
+        coverPath: coverImagePath);
 
     if (responseModel.statusCode == 408) {
-      userLoginModel.requestErrorMessage=kPoorInternetConnection;
+      userLoginModel.requestErrorMessage = kPoorInternetConnection;
       return userLoginModel;
     } else if (responseModel.statusCode == 400 ||
         responseModel.statusCode == 500) {
-      userLoginModel.requestErrorMessage=kNetworkError;
+      userLoginModel.requestErrorMessage = kNetworkError;
       return userLoginModel;
     } else if (responseModel.statusCode == 602) {
-      userLoginModel.requestErrorMessage=("$kMissingParameters\n${responseModel.data}");
+      userLoginModel.requestErrorMessage =
+          ("$kMissingParameters\n${responseModel.data}");
       return userLoginModel;
     } else if (responseModel.statusCode == 607) {
-      userLoginModel.requestErrorMessage=("${responseModel.statusDescription}\n${responseModel.data}");
+      userLoginModel.requestErrorMessage =
+          ("${responseModel.statusDescription}\n${responseModel.data}");
       return userLoginModel;
     } else if (responseModel.data != null &&
         responseModel.data.length > 0 &&
         responseModel.statusDescription == "Profile Updated successfully") {
-      userLoginModel = UserLoginModel.fromJSONForUpdate(responseModel.data,responseModel.statusDescription);
+      userLoginModel = UserLoginModel.fromJSONForUpdate(
+          responseModel.data, responseModel.statusDescription);
       return userLoginModel;
-    }
-    else{
-
-      userLoginModel.requestErrorMessage=responseModel.statusDescription;
+    } else {
+      userLoginModel.requestErrorMessage = responseModel.statusDescription;
       return userLoginModel;
     }
   }
 
-  Future<ForgotPasswordModel> forgotPassword({required String email})async{
-    ForgotPasswordModel forgotPasswordModel=ForgotPasswordModel();
-    Map<String,String> requestBody = {
-      "email":email,
+  Future<ForgotPasswordModel> forgotPassword({required String email}) async {
+    ForgotPasswordModel forgotPasswordModel = ForgotPasswordModel();
+    Map<String, String> requestBody = {
+      "email": email,
     };
-    ResponseModel responseModel = await _httpClient.postRequest(url: kForgotPasswordURL,
-        requestBody: requestBody,needHeaders: false);
-    if((responseModel.statusCode == 400 || responseModel.statusCode == 500 )){
-      forgotPasswordModel.responseMessage= kNetworkError;
+    ResponseModel responseModel = await _httpClient.postRequest(
+        url: kForgotPasswordURL, requestBody: requestBody, needHeaders: false);
+    if ((responseModel.statusCode == 400 || responseModel.statusCode == 500)) {
+      forgotPasswordModel.responseMessage = kNetworkError;
       return forgotPasswordModel;
-    }else if(responseModel.statusCode == 408){
-      forgotPasswordModel.responseMessage= kPoorInternetConnection;
+    } else if (responseModel.statusCode == 408) {
+      forgotPasswordModel.responseMessage = kPoorInternetConnection;
       return forgotPasswordModel;
-    }else if(responseModel.statusDescription=="Email sent successfully"  && responseModel.data != null && responseModel.data.length > 0){
-      forgotPasswordModel =ForgotPasswordModel.fromJSON(responseModel.data,responseModel.statusDescription);
+    } else if (responseModel.statusDescription == "Email sent successfully" &&
+        responseModel.data != null &&
+        responseModel.data.length > 0) {
+      forgotPasswordModel = ForgotPasswordModel.fromJSON(
+          responseModel.data, responseModel.statusDescription);
       return forgotPasswordModel;
-
     }
-   return forgotPasswordModel;
+    return forgotPasswordModel;
   }
 
-
-  Future<UserDetailModel> resendOTP({required String email})async{
-    UserDetailModel userDetailModel=UserDetailModel.empty();
-    Map<String,String> requestBody = {
-      "email":email,
+  Future<UserDetailModel> resendOTP({required String email}) async {
+    UserDetailModel userDetailModel = UserDetailModel.empty();
+    Map<String, String> requestBody = {
+      "email": email,
     };
-    ResponseModel responseModel = await _httpClient.postRequest(url: kResendOtpUrl,
-        requestBody: requestBody,needHeaders: false);
-    if((responseModel.statusCode == 400 || responseModel.statusCode == 500 )){
-      userDetailModel.requestErrorMessage=kNetworkError;
+    ResponseModel responseModel = await _httpClient.postRequest(
+        url: kResendOtpUrl, requestBody: requestBody, needHeaders: false);
+    if ((responseModel.statusCode == 400 || responseModel.statusCode == 500)) {
+      userDetailModel.requestErrorMessage = kNetworkError;
       return userDetailModel;
-    }else if(responseModel.statusCode == 408){
-      userDetailModel.requestErrorMessage=kPoorInternetConnection;
+    } else if (responseModel.statusCode == 408) {
+      userDetailModel.requestErrorMessage = kPoorInternetConnection;
       return userDetailModel;
-    }else if(responseModel.statusDescription=="Success." && responseModel.data!=null){
-      userDetailModel.requestErrorMessage=responseModel.statusDescription;
-      userDetailModel=UserDetailModel.fromJSONOTP(responseModel.data,responseModel.statusDescription);
+    } else if (responseModel.statusDescription == "Success." &&
+        responseModel.data != null) {
+      userDetailModel.requestErrorMessage = responseModel.statusDescription;
+      userDetailModel = UserDetailModel.fromJSONOTP(
+          responseModel.data, responseModel.statusDescription);
       return userDetailModel;
-
     }
-    userDetailModel.requestErrorMessage=responseModel.statusDescription;
+    userDetailModel.requestErrorMessage = responseModel.statusDescription;
     return userDetailModel;
   }
 
-  Future<String> updatePassword({required String email,required String password,required String confirmPassword})async{
-    Map<String,String> requestBody = {
-      "email":email,
-      'password':password,
-      'confirm_password':confirmPassword
+  Future<String> updatePassword(
+      {required String email,
+      required String password,
+      required String confirmPassword}) async {
+    Map<String, String> requestBody = {
+      "email": email,
+      'password': password,
+      'confirm_password': confirmPassword
     };
-    ResponseModel responseModel = await _httpClient.postRequest(url: kUpdatePasswordURL,
-        requestBody: requestBody);
-    if((responseModel.statusCode == 400 || responseModel.statusCode == 500 )){
+    ResponseModel responseModel = await _httpClient.postRequest(
+        url: kUpdatePasswordURL, requestBody: requestBody);
+    if ((responseModel.statusCode == 400 || responseModel.statusCode == 500)) {
       return kNetworkError;
-    }else if(responseModel.statusCode == 408){
+    } else if (responseModel.statusCode == 408) {
       return kPoorInternetConnection;
-    }else if(responseModel.statusDescription=="Password has been changed successfully"){
+    } else if (responseModel.statusDescription ==
+        "Password has been changed successfully") {
       return responseModel.statusDescription;
-
     }
     return responseModel.statusDescription;
   }
-  Future<String> changeOldPassword({required String email,required String password,required String confirmPassword,required String oldPassword})async{
-    Map<String,String> requestBody = {
-      "email":email,
-      "old_password":oldPassword,
-      'password':password,
-      'confirm_password':confirmPassword
-    };
-    ResponseModel responseModel = await _httpClient.postRequest(url: kChangePasswordURL,
-        requestBody: requestBody);
-    if((responseModel.statusCode == 400 || responseModel.statusCode == 500 )){
-      return kNetworkError;
-    }else if(responseModel.statusCode == 408){
-      return kPoorInternetConnection;
-    }else if(responseModel.statusDescription=="Password has been changed successfully"){
-      return responseModel.statusDescription;
 
+  Future<String> changeOldPassword(
+      {required String email,
+      required String password,
+      required String confirmPassword,
+      required String oldPassword}) async {
+    Map<String, String> requestBody = {
+      "email": email,
+      "old_password": oldPassword,
+      'password': password,
+      'confirm_password': confirmPassword
+    };
+    ResponseModel responseModel = await _httpClient.postRequest(
+        url: kChangePasswordURL, requestBody: requestBody);
+    if ((responseModel.statusCode == 400 || responseModel.statusCode == 500)) {
+      return kNetworkError;
+    } else if (responseModel.statusCode == 408) {
+      return kPoorInternetConnection;
+    } else if (responseModel.statusDescription ==
+        "Password has been changed successfully") {
+      return responseModel.statusDescription;
     }
     return responseModel.statusDescription;
   }
 
   Future<String> userLogOut() async {
-    ResponseModel responseModel = await _httpClient.postRequest(
-        url: kLogOutURL);
+    ResponseModel responseModel =
+        await _httpClient.postRequest(url: kLogOutURL);
     if (responseModel.statusDescription.isNotEmpty &&
         responseModel.statusDescription == "User logout successfully") {
       return responseModel.statusDescription;
-
     } else {
       return responseModel.statusDescription;
     }
-
   }
 
-  Future<String> updateLocation({required LocationModel locationModel})async{
-    Map<String,String> requestBody = {
+  Future<String> updateLocation({required LocationModel locationModel}) async {
+    Map<String, String> requestBody = {
       'latitude': locationModel.latitude,
       'longitude': locationModel.longitude,
       'address': locationModel.address,
     };
-    ResponseModel responseModel = await _httpClient.postRequest(url: kUpdateLocationURL,
-        requestBody: requestBody,needHeaders: true);
-    if((responseModel.statusCode == 400 || responseModel.statusCode == 500 )){
+    ResponseModel responseModel = await _httpClient.postRequest(
+        url: kUpdateLocationURL, requestBody: requestBody, needHeaders: true);
+    if ((responseModel.statusCode == 400 || responseModel.statusCode == 500)) {
       return kNetworkError;
-    }else if(responseModel.statusCode == 408){
+    } else if (responseModel.statusCode == 408) {
       return kPoorInternetConnection;
-    }else if(responseModel.statusDescription=="Location Updated successfully"  && responseModel.data != null && responseModel.data.length > 0){
+    } else if (responseModel.statusDescription ==
+            "Location Updated successfully" &&
+        responseModel.data != null &&
+        responseModel.data.length > 0) {
       return responseModel.statusDescription;
-
     }
     return responseModel.statusDescription;
   }
-
 }

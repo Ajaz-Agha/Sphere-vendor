@@ -14,33 +14,34 @@ import '../utils/common_code.dart';
 import '../utils/user_session_management.dart';
 import '../web_services/user_service.dart';
 
-class LoginScreenController extends GetxController with GetSingleTickerProviderStateMixin{
+class LoginScreenController extends GetxController
+    with GetSingleTickerProviderStateMixin {
   late TabController tabController;
-  RxInt selectedIndex=0.obs;
+  RxInt selectedIndex = 0.obs;
   TextEditingController emailTEController = TextEditingController();
   TextEditingController passwordTEController = TextEditingController();
-  RegExp emailRegex = RegExp(r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$');
+  RegExp emailRegex = RegExp(
+      r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$');
 
   RxBool emailErrorVisible = RxBool(false);
   RxString emailErrorMsg = "".obs;
   RxBool passwordErrorVisible = RxBool(false);
   RxString passwordErrorMsg = "".obs;
-  RxBool obscured = true.obs,isRemember=false.obs;
+  RxBool obscured = true.obs, isRemember = false.obs;
 
-  FocusNode emailFocusNode = FocusNode(),
-      passwordFocusNode = FocusNode();
+  FocusNode emailFocusNode = FocusNode(), passwordFocusNode = FocusNode();
 
   UserSession userSession = UserSession();
 
-  RxMap<String, dynamic> userDataMap=<String,dynamic>{}.obs;
+  RxMap<String, dynamic> userDataMap = <String, dynamic>{}.obs;
 
-  RxString deviceTokenToSendPushNotification=''.obs;
+  RxString deviceTokenToSendPushNotification = ''.obs;
   @override
   void onInit() {
-    tabController=TabController(length: 2, vsync: this)..addListener(() {
-      selectedIndex.value=tabController.index;
-
-    });
+    tabController = TabController(length: 2, vsync: this)
+      ..addListener(() {
+        selectedIndex.value = tabController.index;
+      });
     getDeviceTokenToSendNotification();
     super.onInit();
   }
@@ -52,53 +53,57 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
     if (result.status == LoginStatus.success) {
       final userData = await FacebookAuth.instance.getUserData();
       userDataMap.value = userData;
-      if(userDataMap['email']!= null) {
+      if (userDataMap['email'] != null) {
         ProgressDialog pd = ProgressDialog();
         pd.showDialog();
-        if(await CommonCode().checkInternetAccess()) {
+        if (await CommonCode().checkInternetAccess()) {
           UserLoginModel userLoginModel = await UserService().socialLoginUser(
               email: userDataMap['email'],
               deviceToken: deviceTokenToSendPushNotification.value,
-              businessName: userDataMap['name']
-          );
-          if (userLoginModel.token.isNotEmpty && userLoginModel.userDetailModel.role=='vendor') {
+              businessName: userDataMap['name']);
+          if (userLoginModel.token.isNotEmpty &&
+              userLoginModel.userDetailModel.role == 'vendor') {
             userSession.createSession(userLoginModel: userLoginModel);
             pd.dismissDialog();
-            if(userLoginModel.userDetailModel.firstName!='' && userLoginModel.userDetailModel.lastName!='' && userLoginModel.userDetailModel.phone!=''){
+            if (userLoginModel.userDetailModel.firstName != '' &&
+                userLoginModel.userDetailModel.lastName != '' &&
+                userLoginModel.userDetailModel.phone != '') {
               Get.offAllNamed(kVendorHomeScreen);
-            }else {
+            } else {
               Get.offAllNamed(kVendorProfileScreen);
             }
-          } else if(userLoginModel.userDetailModel.role=='user'){
+          } else if (userLoginModel.userDetailModel.role == 'user') {
             pd.dismissDialog();
-            CustomDialogs().showMessageDialog(title: "Alert",
+            CustomDialogs().showMessageDialog(
+                title: "Alert",
                 description: 'Email belongs to User',
                 type: DialogType.ERROR);
-          }else if(userLoginModel.requestErrorMessage=='Please verify your account'){
-            Get.offNamed(kEmailVerificationScreen,arguments: emailTEController.text);
-          }else {
+          } else if (userLoginModel.requestErrorMessage ==
+              'Please verify your account') {
+            Get.offNamed(kEmailVerificationScreen,
+                arguments: emailTEController.text);
+          } else {
             pd.dismissDialog();
-            CustomDialogs().showMessageDialog(title: "Alert",
+            CustomDialogs().showMessageDialog(
+                title: "Alert",
                 description: userLoginModel.requestErrorMessage,
                 type: DialogType.ERROR);
           }
-        } else{
+        } else {
           pd.dismissDialog();
-          CustomDialogs().showMessageDialog(title: 'Alert',
+          CustomDialogs().showMessageDialog(
+              title: 'Alert',
               description: kInternetMsg,
               type: DialogType.ERROR);
         }
-      }else{
+      } else {
         CustomDialogs().showMessageDialog(
             title: 'Alert',
             description: 'Facebook email not found',
             type: DialogType.ERROR);
       }
-    } else {
-    }
-
+    } else {}
   }
-
 
   Future<void> getDeviceTokenToSendNotification() async {
     final FirebaseMessaging fcm = FirebaseMessaging.instance;
@@ -108,7 +113,7 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
 
   bool emailValidation(String value) {
     if (value.trim() == "") {
-      if(emailTEController.text.isEmpty){
+      if (emailTEController.text.isEmpty) {
         emailErrorMsg.value = "Email is required!";
         emailErrorVisible.value = true;
       }
@@ -126,39 +131,41 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
     if (value.trim() == "") {
       passwordErrorVisible.value = true;
       passwordErrorMsg.value = "Password is required!";
-    }else if (passwordTEController.text.trim().length < 8 ||
+    } else if (passwordTEController.text.trim().length < 8 ||
         passwordTEController.text.isEmpty) {
       passwordErrorVisible.value = true;
       passwordErrorMsg.value = "Password should be of at least 8 Characters!";
-    }else if(!passwordTEController.text.trim().contains(RegExp(r'^(?=.*?[A-Z])'))){
+    } else if (!passwordTEController.text
+        .trim()
+        .contains(RegExp(r'^(?=.*?[A-Z])'))) {
       passwordErrorVisible.value = true;
-      passwordErrorMsg.value = "Password should be contain at least 1 capital letter";
-    }
-    else {
+      passwordErrorMsg.value =
+          "Password should be contain at least 1 capital letter";
+    } else {
       passwordErrorVisible.value = false;
       passwordErrorMsg.value = "";
     }
     return passwordErrorVisible.value;
   }
 
-  void removeFocus(){
-    if(emailFocusNode.hasFocus) {
+  void removeFocus() {
+    if (emailFocusNode.hasFocus) {
       emailFocusNode.unfocus();
     }
-    if(passwordFocusNode.hasFocus) {
+    if (passwordFocusNode.hasFocus) {
       passwordFocusNode.unfocus();
     }
   }
 
-  void onRestPasswordTap(){
+  void onRestPasswordTap() {
     Get.toNamed(kResetPasswordScreen);
   }
-  void isRememberMeTap(){
-    if(!emailValidation(emailTEController.text)) {
+
+  void isRememberMeTap() {
+    if (!emailValidation(emailTEController.text)) {
       isRemember.value = !isRemember.value;
     }
   }
-
 
   //Methods
   void toggleObscured() {
@@ -172,96 +179,106 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
   Future<void> onSubmitProcess() async {
     removeFocus();
     bool isAllDataValid = false;
-    isAllDataValid =  !emailValidation(emailTEController.text);
-    isAllDataValid = !passwordValidation(passwordTEController.text) && isAllDataValid;
+    isAllDataValid = !emailValidation(emailTEController.text);
+    isAllDataValid =
+        !passwordValidation(passwordTEController.text) && isAllDataValid;
 
     if (isAllDataValid) {
       ProgressDialog pd = ProgressDialog();
       pd.showDialog();
-      if(await CommonCode().checkInternetAccess()) {
+      if (await CommonCode().checkInternetAccess()) {
         UserLoginModel userLoginModel = await UserService().loginUser(
             password: passwordTEController.text,
             email: emailTEController.text,
-        deviceToken: deviceTokenToSendPushNotification.value
-        );
-        if (userLoginModel.token.isNotEmpty && userLoginModel.userDetailModel.role=='vendor') {
+            deviceToken: deviceTokenToSendPushNotification.value);
+        if (userLoginModel.token.isNotEmpty &&
+            userLoginModel.userDetailModel.role == 'vendor') {
+          print("User Token: " "${userLoginModel.token}");
           userSession.createSession(userLoginModel: userLoginModel);
           pd.dismissDialog();
-          if(userLoginModel.userDetailModel.firstName!='' && userLoginModel.userDetailModel.lastName!='' && userLoginModel.userDetailModel.phone!=''){
+          if (userLoginModel.userDetailModel.firstName != '' &&
+              userLoginModel.userDetailModel.lastName != '' &&
+              userLoginModel.userDetailModel.phone != '') {
             Get.offAllNamed(kVendorHomeScreen);
-          }else {
+          } else {
             Get.offAllNamed(kVendorProfileScreen);
           }
-        } else if(userLoginModel.userDetailModel.role=='user'){
+        } else if (userLoginModel.userDetailModel.role == 'user') {
           pd.dismissDialog();
-          CustomDialogs().showMessageDialog(title: "Alert",
+          CustomDialogs().showMessageDialog(
+              title: "Alert",
               description: 'Email belongs to User',
               type: DialogType.ERROR);
-        }else if(userLoginModel.requestErrorMessage=='Please verify your account'){
-          Get.offNamed(kEmailVerificationScreen,arguments: emailTEController.text);
-        }else {
+        } else if (userLoginModel.requestErrorMessage ==
+            'Please verify your account') {
+          Get.offNamed(kEmailVerificationScreen,
+              arguments: emailTEController.text);
+        } else {
           pd.dismissDialog();
-          CustomDialogs().showMessageDialog(title: "Alert",
+          CustomDialogs().showMessageDialog(
+              title: "Alert",
               description: userLoginModel.requestErrorMessage,
               type: DialogType.ERROR);
         }
-      } else{
+      } else {
         pd.dismissDialog();
-        CustomDialogs().showMessageDialog(title: 'Alert',
-            description: kInternetMsg,
-            type: DialogType.ERROR);
+        CustomDialogs().showMessageDialog(
+            title: 'Alert', description: kInternetMsg, type: DialogType.ERROR);
       }
     }
   }
 
-  Future<void> onGoogleSignIn() async{
+  Future<void> onGoogleSignIn() async {
     GoogleSignIn googleSignIn = GoogleSignIn();
     try {
-     await googleSignIn.signIn();
-     if(googleSignIn.currentUser!.id!=''){
-       emailTEController.text=googleSignIn.currentUser!.email;
-       ProgressDialog pd = ProgressDialog();
-       pd.showDialog();
-       if(await CommonCode().checkInternetAccess()) {
-         UserLoginModel userLoginModel = await UserService().socialLoginUser(
-           email: emailTEController.text,
-           deviceToken: deviceTokenToSendPushNotification.value,
-           businessName: googleSignIn.currentUser!.displayName!
-         );
-         if (userLoginModel.token.isNotEmpty && userLoginModel.userDetailModel.role=='vendor') {
-           userSession.createSession(userLoginModel: userLoginModel);
-           pd.dismissDialog();
-           if(userLoginModel.userDetailModel.firstName!='' && userLoginModel.userDetailModel.lastName!='' && userLoginModel.userDetailModel.phone!=''){
-             Get.offAllNamed(kVendorHomeScreen);
-           }else {
-             Get.offAllNamed(kVendorProfileScreen);
-           }
-         } else if(userLoginModel.userDetailModel.role=='user'){
-           pd.dismissDialog();
-           CustomDialogs().showMessageDialog(title: "Alert",
-               description: 'Email belongs to User',
-               type: DialogType.ERROR);
-         }else if(userLoginModel.requestErrorMessage=='Please verify your account'){
-           Get.offNamed(kEmailVerificationScreen,arguments: emailTEController.text);
-         }else {
-           pd.dismissDialog();
-           CustomDialogs().showMessageDialog(title: "Alert",
-               description: userLoginModel.requestErrorMessage,
-               type: DialogType.ERROR);
-         }
-       } else{
-         pd.dismissDialog();
-         CustomDialogs().showMessageDialog(title: 'Alert',
-             description: kInternetMsg,
-             type: DialogType.ERROR);
-       }
-     }
-
-    } catch (error) {
-    }
+      await googleSignIn.signIn();
+      if (googleSignIn.currentUser!.id != '') {
+        emailTEController.text = googleSignIn.currentUser!.email;
+        ProgressDialog pd = ProgressDialog();
+        pd.showDialog();
+        if (await CommonCode().checkInternetAccess()) {
+          UserLoginModel userLoginModel = await UserService().socialLoginUser(
+              email: emailTEController.text,
+              deviceToken: deviceTokenToSendPushNotification.value,
+              businessName: googleSignIn.currentUser!.displayName!);
+          if (userLoginModel.token.isNotEmpty &&
+              userLoginModel.userDetailModel.role == 'vendor') {
+            userSession.createSession(userLoginModel: userLoginModel);
+            pd.dismissDialog();
+            if (userLoginModel.userDetailModel.firstName != '' &&
+                userLoginModel.userDetailModel.lastName != '' &&
+                userLoginModel.userDetailModel.phone != '') {
+              Get.offAllNamed(kVendorHomeScreen);
+            } else {
+              Get.offAllNamed(kVendorProfileScreen);
+            }
+          } else if (userLoginModel.userDetailModel.role == 'user') {
+            pd.dismissDialog();
+            CustomDialogs().showMessageDialog(
+                title: "Alert",
+                description: 'Email belongs to User',
+                type: DialogType.ERROR);
+          } else if (userLoginModel.requestErrorMessage ==
+              'Please verify your account') {
+            Get.offNamed(kEmailVerificationScreen,
+                arguments: emailTEController.text);
+          } else {
+            pd.dismissDialog();
+            CustomDialogs().showMessageDialog(
+                title: "Alert",
+                description: userLoginModel.requestErrorMessage,
+                type: DialogType.ERROR);
+          }
+        } else {
+          pd.dismissDialog();
+          CustomDialogs().showMessageDialog(
+              title: 'Alert',
+              description: kInternetMsg,
+              type: DialogType.ERROR);
+        }
+      }
+    } catch (error) {}
   }
-
-
 
   @override
   void dispose() {
@@ -270,6 +287,4 @@ class LoginScreenController extends GetxController with GetSingleTickerProviderS
     passwordTEController.dispose();
     super.dispose();
   }
-
-
 }

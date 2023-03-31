@@ -6,60 +6,66 @@ import '../../utils/app_colors.dart';
 import '../custom_widget/myWidgets.dart';
 import '../custom_widget/textStyle.dart';
 
-
-class LoginScreen extends GetView<LoginScreenController>{
+class LoginScreen extends GetView<LoginScreenController> {
   const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: AppColors.primary,
-        appBar:appBarWidget(),
-        body: _getBody()
-    );
+        appBar: appBarWidget(),
+        body: _getBody());
   }
 
-  Widget _getBody(){
+  Widget _getBody() {
     return Container(
       width: Get.width,
       height: Get.height,
       decoration: BoxDecoration(
           color: AppColors.white,
-          borderRadius: const BorderRadius.only(topLeft: Radius.circular(40),topRight: Radius.circular(40))
-      ),
+          borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(40), topRight: Radius.circular(40))),
       child: Padding(
-        padding: const EdgeInsets.only(top: 10,right: 20,left: 20),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: <Widget>[
-          TabBar(
-            controller: controller.tabController,
-            labelColor: AppColors.darkPink,
-            unselectedLabelColor: Colors.black,
-            indicatorColor: AppColors.darkPink,
-            indicatorSize: TabBarIndicatorSize.label,
-            tabs: [
-              Tab(child: Text('    Sign In    ',style: heading1SemiBold(fontSize: 20))),
-              Tab(child: Text('    Sign Up    ',style: heading1SemiBold(fontSize: 20))),
-            ],
-          ),
-          Expanded(
-            child: Container(
-                height: 400,
-                decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: AppColors.lightDividerColor,width: 0.5))),
-                child: TabBarView(
-                    controller: controller.tabController,
-                    children: <Widget>[
-                      loginWidget(),
-                      const SignupScreen(),
-                    ])
-            ),
-          )
-        ]),
+        padding: const EdgeInsets.only(top: 10, right: 20, left: 20),
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              TabBar(
+                controller: controller.tabController,
+                labelColor: AppColors.darkPink,
+                unselectedLabelColor: Colors.black,
+                indicatorColor: AppColors.darkPink,
+                indicatorSize: TabBarIndicatorSize.label,
+                tabs: [
+                  Tab(
+                      child: Text('    Sign In    ',
+                          style: heading1SemiBold(fontSize: 20))),
+                  Tab(
+                      child: Text('    Sign Up    ',
+                          style: heading1SemiBold(fontSize: 20))),
+                ],
+              ),
+              Expanded(
+                child: Container(
+                    height: 400,
+                    decoration: BoxDecoration(
+                        border: Border(
+                            top: BorderSide(
+                                color: AppColors.lightDividerColor,
+                                width: 0.5))),
+                    child: TabBarView(
+                        controller: controller.tabController,
+                        children: <Widget>[
+                          loginWidget(),
+                          const SignupScreen(),
+                        ])),
+              )
+            ]),
       ),
     );
   }
 
-  Widget loginWidget(){
+  Widget loginWidget() {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -68,27 +74,54 @@ class LoginScreen extends GetView<LoginScreenController>{
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 20),
-              child:  Obx(
-                  ()=>customTextField(
+              child: Obx(
+                () => customTextField(
                     onChanged: controller.emailValidation,
                     controller: controller.emailTEController,
-                    hintText: "Email",prefexIcon: Icon(Icons.mail_outline,size: 15,color: AppColors.black,),color: AppColors.lightPink,suffixIcon: Icon(Icons.check_circle,color: controller.emailErrorVisible.value?AppColors.lightPink:AppColors.darkPink,size: 15,)),
-              ),),
+                    hintText: "Email",
+                    prefexIcon: Icon(
+                      Icons.mail_outline,
+                      size: 15,
+                      color: AppColors.black,
+                    ),
+                    color: AppColors.lightPink,
+                    suffixIcon: Icon(
+                      Icons.check_circle,
+                      color: controller.emailErrorVisible.value
+                          ? AppColors.lightPink
+                          : AppColors.darkPink,
+                      size: 15,
+                    )),
+              ),
+            ),
             Obx(
-                  ()=> Visibility(
+              () => Visibility(
                 visible: controller.emailErrorVisible.value,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 3,bottom: 10),
-                  child: Text(controller.emailErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
+                  padding: const EdgeInsets.only(top: 3, bottom: 10),
+                  child: Text(
+                    controller.emailErrorMsg.value,
+                    style: heading1(color: AppColors.darkPink, fontSize: 12),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 10,),
+            const SizedBox(
+              height: 10,
+            ),
             Obx(
-                  ()=> customTextField(
-                onChanged: controller.passwordValidation,
+              () => customTextField(
+                // onChanged: controller.passwordValidation,
                 controller: controller.passwordTEController,
-                isPassword: controller.obscured.value,showpassword:controller.obscured.value,hintText: "Password",prefexIcon: Icon(Icons.lock_open,size: 15,color: AppColors.black,),color: AppColors.lightPink,
+                isPassword: controller.obscured.value,
+                showpassword: controller.obscured.value,
+                hintText: "Password",
+                prefexIcon: Icon(
+                  Icons.lock_open,
+                  size: 15,
+                  color: AppColors.black,
+                ),
+                color: AppColors.lightPink,
                 suffixIcon: GestureDetector(
                   onTap: controller.toggleObscured,
                   child: Icon(
@@ -98,38 +131,57 @@ class LoginScreen extends GetView<LoginScreenController>{
                     size: 15,
                     color: AppColors.lightPink,
                   ),
-                ),),
-            ),
-            Obx(
-                  ()=> Visibility(
-                visible: controller.passwordErrorVisible.value,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 3,bottom: 10),
-                  child: Text(controller.passwordErrorMsg.value,style: heading1(color: AppColors.darkPink,fontSize: 12),),
                 ),
               ),
-            ),           Padding(
-              padding: const EdgeInsets.only(top: 10,bottom: 20),
+            ),
+            Obx(
+              () => Visibility(
+                visible: controller.passwordErrorVisible.value,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 3, bottom: 10),
+                  child: Text(
+                    controller.passwordErrorMsg.value,
+                    style: heading1(color: AppColors.darkPink, fontSize: 12),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 10, bottom: 20),
               child: Row(
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: (){
+                      onTap: () {
                         controller.isRememberMeTap();
                       },
                       child: Row(
                         children: [
-                          Obx(()=> Icon(controller.isRemember.value?Icons.check_box_sharp:Icons.check_box_outline_blank,color: AppColors.lightPink,size: 12)),
+                          Obx(() => Icon(
+                              controller.isRemember.value
+                                  ? Icons.check_box_sharp
+                                  : Icons.check_box_outline_blank,
+                              color: AppColors.lightPink,
+                              size: 12)),
                           const SizedBox(width: 3),
-                          Expanded(child: Text('Remember me',style: heading1(color: AppColors.primary,fontSize: 12),)),
-                        ],),
+                          Expanded(
+                              child: Text(
+                            'Remember me',
+                            style: heading1(
+                                color: AppColors.primary, fontSize: 12),
+                          )),
+                        ],
+                      ),
                     ),
                   ),
                   GestureDetector(
-                      onTap: (){
+                      onTap: () {
                         controller.onRestPasswordTap();
                       },
-                      child: Text('Forgot Password?',style: heading1(color: AppColors.primary,fontSize: 12),)),
+                      child: Text(
+                        'Forgot Password?',
+                        style: heading1(color: AppColors.primary, fontSize: 12),
+                      )),
                 ],
               ),
             ),
@@ -137,22 +189,33 @@ class LoginScreen extends GetView<LoginScreenController>{
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                socialMediaIconWidget(image: "facebook_icon.png",onPressed: (){
-                  controller.fbLoginTap();
-                }),
+                socialMediaIconWidget(
+                    image: "facebook_icon.png",
+                    onPressed: () {
+                      controller.fbLoginTap();
+                    }),
                 const SizedBox(width: 17),
-                socialMediaIconWidget(image: "google_icon.png",onPressed: (){
-                  controller.onGoogleSignIn();
-                }),
+                socialMediaIconWidget(
+                    image: "google_icon.png",
+                    onPressed: () {
+                      controller.onGoogleSignIn();
+                    }),
               ],
             ),
             const SizedBox(height: 30),
-            primaryButton(onPressed: (){
-              controller.onSubmitProcess();
-            },buttonText: 'Sign In',isMargin: false,color: AppColors.darkPink,textColor: AppColors.white,),
-            const SizedBox(height: 10,)
+            primaryButton(
+              onPressed: () {
+                controller.onSubmitProcess();
+              },
+              buttonText: 'Sign In',
+              isMargin: false,
+              color: AppColors.darkPink,
+              textColor: AppColors.white,
+            ),
+            const SizedBox(
+              height: 10,
+            )
           ],
-
         ),
       ),
     );
@@ -163,7 +226,7 @@ class LoginScreen extends GetView<LoginScreenController>{
       height: 36,
       width: 59,
       decoration: BoxDecoration(
-        color:AppColors.textFieldBackground,
+        color: AppColors.textFieldBackground,
         borderRadius: BorderRadius.circular(8),
         shape: BoxShape.rectangle,
       ),
@@ -177,30 +240,47 @@ class LoginScreen extends GetView<LoginScreenController>{
     );
   }
 
-  PreferredSize appBarWidget(){
+  PreferredSize appBarWidget() {
     return PreferredSize(
-        preferredSize:const Size.fromHeight(220),
+        preferredSize: const Size.fromHeight(220),
         child: SafeArea(
             child: Stack(
-              children: [
-                SizedBox(
-                    height: 220,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 40,left: 20,right: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Obx(()=>Text(controller.selectedIndex.value!=0?"Create a new":"Welcome",style: bodyMediumMedium(color: AppColors.white,fontSize: 30),)),
-                          Obx(()=>Text(controller.selectedIndex.value!=0?"account":"back",style: heading1SemiBold(color: AppColors.white,fontSize: 30),)),
-                          const SizedBox(height: 14,),
-                          Expanded(child: Obx(()=>Text(controller.selectedIndex.value!=0?'Please Sign Up to your Account to Continue with Sphere Club':'No risk for NEW business. \nNo special equipment required! Your offers can be redeemed via the APP or visually inspected.',style:heading1SemiBold(color: AppColors.white,fontSize: 14))))
-                        ],
+          children: [
+            SizedBox(
+                height: 220,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Obx(() => Text(
+                            controller.selectedIndex.value != 0
+                                ? "Create a new"
+                                : "Welcome",
+                            style: bodyMediumMedium(
+                                color: AppColors.white, fontSize: 30),
+                          )),
+                      Obx(() => Text(
+                            controller.selectedIndex.value != 0
+                                ? "account"
+                                : "back",
+                            style: heading1SemiBold(
+                                color: AppColors.white, fontSize: 30),
+                          )),
+                      const SizedBox(
+                        height: 14,
                       ),
-                    )
-                ),
-              ],
-            )
-        ));
+                      Expanded(
+                          child: Obx(() => Text(
+                              controller.selectedIndex.value != 0
+                                  ? 'Please Sign Up to your Account to Continue with Sphere Club'
+                                  : 'No risk for NEW business. \nNo special equipment required! Your offers can be redeemed via the APP or visually inspected.',
+                              style: heading1SemiBold(
+                                  color: AppColors.white, fontSize: 14))))
+                    ],
+                  ),
+                )),
+          ],
+        )));
   }
-
 }
