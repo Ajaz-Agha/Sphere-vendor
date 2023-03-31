@@ -50,6 +50,9 @@ class LoginScreenController extends GetxController
     final LoginResult result = await FacebookAuth.instance.login(
       permissions: ['email', 'public_profile'],
     ); // by default we request the email and the public profile
+    log("RESULT STATUS: ${result.status}");
+    log("MESSAGE: ${result.message}");
+    log("TOKEN: ${result.accessToken}");
     if (result.status == LoginStatus.success) {
       final userData = await FacebookAuth.instance.getUserData();
       userDataMap.value = userData;

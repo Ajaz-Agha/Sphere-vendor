@@ -45,14 +45,14 @@ android {
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
-    // signingConfigs {
-    //     debug {
-    //         keyAlias 'uploadkeystore1'
-    //         keyPassword 'key665050'
-    //         storeFile file('upload-keystore.jks')
-    //         storePassword 'key665050'
-    //     }
-    // }
+    signingConfigs {
+        debug {
+            keyAlias 'uploadkeystore1'
+            keyPassword 'key665050'
+            storeFile file('D:/sphere vendor project detail/upload-keystore.jks')
+            storePassword 'key665050'
+        }
+    }
 
     buildTypes {
         release {
